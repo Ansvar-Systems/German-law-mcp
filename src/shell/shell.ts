@@ -1,3 +1,4 @@
+import { upgradeMessage } from "../capabilities.js";
 import { AdapterRegistry } from "./adapter-registry.js";
 import { ShellError, toShellError } from "./errors.js";
 import { TOOL_DEFINITIONS } from "./tool-contract.js";
@@ -120,6 +121,12 @@ export class LawMcpShell {
 
   private async searchCaseLaw(args: Record<string, unknown>): Promise<unknown> {
     const adapter = this.requireCaseLawAdapter(args);
+
+    const gateResult = requireDbCapability(adapter, "basic_case_law", "Case law search");
+    if (gateResult !== null) {
+      return gateResult;
+    }
+
     const query = requireString(args, "query");
     const limit = optionalNumber(args, "limit");
     const court = optionalString(args, "court");
@@ -140,6 +147,12 @@ export class LawMcpShell {
     args: Record<string, unknown>,
   ): Promise<unknown> {
     const adapter = this.requirePreparatoryWorksAdapter(args);
+
+    const gateResult = requireDbCapability(adapter, "full_preparatory_works", "Preparatory works");
+    if (gateResult !== null) {
+      return gateResult;
+    }
+
     const citation = optionalString(args, "citation");
     const statuteId = optionalString(args, "statuteId");
     const query = optionalString(args, "query");
@@ -209,8 +222,24 @@ export class LawMcpShell {
     const adapter = this.requireLegalStanceAdapter(args);
     const query = requireString(args, "query");
     const limit = optionalNumber(args, "limit");
-    const includeCaseLaw = optionalBoolean(args, "includeCaseLaw");
-    const includePreparatoryWorks = optionalBoolean(args, "includePreparatoryWorks");
+    let includeCaseLaw = optionalBoolean(args, "includeCaseLaw");
+    let includePreparatoryWorks = optionalBoolean(args, "includePreparatoryWorks");
+
+    // Gracefully suppress case law / preparatory works when the DB lacks
+    // those tables, and collect upgrade notices for the response.
+    const notices: string[] = [];
+    const dbCaps = adapter.getDbCapabilities?.();
+    if (dbCaps !== undefined) {
+      if ((includeCaseLaw === undefined || includeCaseLaw) && !dbCaps.has("basic_case_law")) {
+        includeCaseLaw = false;
+        notices.push(upgradeMessage("Case law search"));
+      }
+      if ((includePreparatoryWorks === undefined || includePreparatoryWorks) && !dbCaps.has("full_preparatory_works")) {
+        includePreparatoryWorks = false;
+        notices.push(upgradeMessage("Preparatory works"));
+      }
+    }
+
     const request: LegalStanceRequest = {
       query,
       ...(limit === undefined ? {} : { limit }),
@@ -218,7 +247,13 @@ export class LawMcpShell {
       ...(includePreparatoryWorks === undefined ? {} : { includePreparatoryWorks }),
     };
 
-    return adapter.buildLegalStance!(request);
+    const result = await adapter.buildLegalStance!(request);
+
+    if (notices.length > 0 && result && typeof result === "object") {
+      return { ...result, tierNotices: notices };
+    }
+
+    return result;
   }
 
   private async getEuBasis(args: Record<string, unknown>): Promise<unknown> {
@@ -573,4 +608,39 @@ function optionalBoolean(
   }
 
   return value;
+}
+
+/**
+ * Check whether the adapter's runtime DB has the required capability.
+ *
+ * Returns `null` when the capability is present (caller should proceed) or
+ * an upgrade-message payload when the capability is missing (caller should
+ * return this payload directly).
+ *
+ * When the adapter does not expose `getDbCapabilities` (professional tier,
+ * or non-DB adapters), the check is skipped and `null` is returned so that
+ * the normal code path runs.
+ */
+function requireDbCapability(
+  adapter: CountryAdapter,
+  capability: string,
+  featureLabel: string,
+): Record<string, unknown> | null {
+  const dbCaps = adapter.getDbCapabilities?.();
+
+  // No runtime capability detection → assume full access (professional tier).
+  if (dbCaps === undefined) {
+    return null;
+  }
+
+  if (dbCaps.has(capability)) {
+    return null;
+  }
+
+  return {
+    documents: [],
+    total: 0,
+    upgradeRequired: true,
+    message: upgradeMessage(featureLabel),
+  };
 }

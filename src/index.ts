@@ -1,4 +1,5 @@
 import { BUILTIN_ADAPTERS } from "./adapters/index.js";
+import { getCapabilities } from "./db/german-law-db.js";
 import { ShellError } from "./shell/errors.js";
 import { LawMcpShell } from "./shell/shell.js";
 import type { CountryAdapter, ToolCall } from "./shell/types.js";
@@ -45,29 +46,46 @@ async function main(): Promise<void> {
 function resolveAdapters(): CountryAdapter[] {
   const adapterFilter = process.env.LAW_COUNTRIES?.trim();
 
+  let adapters: CountryAdapter[];
+
   if (!adapterFilter) {
-    return BUILTIN_ADAPTERS;
-  }
-
-  const selected = new Set(
-    adapterFilter
-      .split(",")
-      .map((country) => country.trim().toLowerCase())
-      .filter(Boolean),
-  );
-
-  const selectedAdapters = BUILTIN_ADAPTERS.filter((adapter) =>
-    selected.has(adapter.country.code.toLowerCase()),
-  );
-
-  if (selectedAdapters.length === 0) {
-    throw new ShellError(
-      "no_countries_selected",
-      `LAW_COUNTRIES did not match any registered adapters: ${adapterFilter}`,
+    adapters = BUILTIN_ADAPTERS;
+  } else {
+    const selected = new Set(
+      adapterFilter
+        .split(",")
+        .map((country) => country.trim().toLowerCase())
+        .filter(Boolean),
     );
+
+    adapters = BUILTIN_ADAPTERS.filter((adapter) =>
+      selected.has(adapter.country.code.toLowerCase()),
+    );
+
+    if (adapters.length === 0) {
+      throw new ShellError(
+        "no_countries_selected",
+        `LAW_COUNTRIES did not match any registered adapters: ${adapterFilter}`,
+      );
+    }
   }
 
-  return selectedAdapters;
+  return adapters.map(enrichWithDbCapabilities);
+}
+
+/**
+ * Attach runtime DB capability detection to adapters that use a local
+ * SQLite database. This enables the shell to gate tools (e.g. case law,
+ * preparatory works) when the underlying tables are absent on the free tier.
+ */
+function enrichWithDbCapabilities(adapter: CountryAdapter): CountryAdapter {
+  if (adapter.country.code === "de") {
+    return {
+      ...adapter,
+      getDbCapabilities: () => getCapabilities(),
+    };
+  }
+  return adapter;
 }
 
 function readStdin(): Promise<string> {

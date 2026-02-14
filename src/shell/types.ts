@@ -214,6 +214,13 @@ export interface CountryAdapter {
     eu: boolean;
     ingestion: boolean;
   };
+  /**
+   * Optional runtime capability detection. Returns the set of DB-level
+   * capabilities actually available (e.g. tables present). When provided,
+   * the shell uses this to gate tools that require professional-tier data
+   * and return a clear upgrade message instead of empty results.
+   */
+  getDbCapabilities?(): ReadonlySet<string>;
   searchDocuments?(request: SearchRequest): Promise<SearchResponse>;
   searchCaseLaw?(request: CaseLawSearchRequest): Promise<SearchResponse>;
   getPreparatoryWorks?(request: PreparatoryWorksRequest): Promise<SearchResponse>;

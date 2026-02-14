@@ -15,6 +15,7 @@ import type { IncomingMessage } from 'http';
 // Import the shell and adapters from the built output.
 import { LawMcpShell } from '../src/shell/shell.js';
 import { germanyAdapter } from '../src/adapters/de.js';
+import { getCapabilities } from '../src/db/german-law-db.js';
 import type { ToolName } from '../src/shell/types.js';
 
 // ---------------------------------------------------------------------------
@@ -135,8 +136,13 @@ export default async function handler(
   try {
     await ensureDatabase();
 
-    // Build the shell from the Germany adapter
-    const shell = LawMcpShell.fromAdapters([germanyAdapter]);
+    // Build the shell from the Germany adapter, enriched with runtime
+    // capability detection so that free-tier gating works correctly.
+    const enrichedAdapter = {
+      ...germanyAdapter,
+      getDbCapabilities: () => getCapabilities(),
+    };
+    const shell = LawMcpShell.fromAdapters([enrichedAdapter]);
 
     // Create MCP server and bridge the shell's tools into it
     const server = new Server(
