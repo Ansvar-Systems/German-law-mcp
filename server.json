@@ -1,0 +1,33 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "eu.ansvar/german-law-mcp",
+  "description": "Query German statutes, case law, and preparatory works from gesetze-im-internet.de",
+  "repository": {
+    "url": "https://github.com/Ansvar-Systems/German-law-mcp",
+    "source": "github"
+  },
+  "homepage": "https://ansvar.eu",
+  "version": "0.2.0",
+  "license": "Apache-2.0",
+  "keywords": [
+    "german-law",
+    "germany",
+    "legal",
+    "gesetze",
+    "rechtsprechung",
+    "compliance",
+    "gdpr",
+    "eu-law",
+    "mcp"
+  ],
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@ansvar/german-law-mcp",
+      "version": "0.2.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

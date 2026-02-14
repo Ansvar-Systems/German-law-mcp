@@ -1,12 +1,42 @@
 {
   "name": "@ansvar/german-law-mcp",
   "version": "0.2.0",
-  "private": true,
-  "description": "German law MCP server built from the law adapter template.",
+  "mcpName": "eu.ansvar/german-law-mcp",
+  "description": "German legal research MCP server with statutes, case law, and preparatory works from gesetze-im-internet.de",
   "type": "module",
+  "main": "dist/src/index.js",
+  "bin": {
+    "german-law-mcp": "dist/src/index.js"
+  },
+  "files": [
+    "dist",
+    "server.json"
+  ],
   "engines": {
     "node": ">=20"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ansvar-Systems/German-law-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Ansvar-Systems/German-law-mcp/issues"
+  },
+  "homepage": "https://github.com/Ansvar-Systems/German-law-mcp#readme",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "claude",
+    "german-law",
+    "germany",
+    "legal",
+    "compliance",
+    "gesetze",
+    "ansvar"
+  ],
+  "author": "Ansvar Systems AB <hello@ansvar.ai>",
+  "license": "Apache-2.0",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/index.ts",

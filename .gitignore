@@ -8,3 +8,4 @@ data/*.db-wal
 data/*.db-shm
 data/.auto_update.lock
 __pycache__/
+.vercel

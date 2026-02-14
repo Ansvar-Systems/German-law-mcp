@@ -1,0 +1,248 @@
+name: Daily Data Freshness Check
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      auto_update:
+        description: 'Automatically run incremental update, rebuild, and tag for publishing'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+permissions:
+  contents: read
+
+jobs:
+  check-statutes:
+    name: Check statute updates (gesetze-im-internet)
+    runs-on: ubuntu-latest
+    outputs:
+      updates_found: ${{ steps.check.outputs.updates_found }}
+      update_count: ${{ steps.check.outputs.update_count }}
+      update_summary: ${{ steps.check.outputs.update_summary }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Node dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Install Python dependencies
+        run: pip install requests lxml
+
+      - name: Check for statute updates (dry-run)
+        id: check
+        run: |
+          echo "Checking gesetze-im-internet.de for updates..."
+
+          python3 scripts/auto_update_german_law.py --dry-run --quiet 2>&1 | tee check_output.txt || true
+
+          UPDATES=$(grep -c "needs update\|new law\|UPDATE" check_output.txt || echo "0")
+
+          echo "update_count=$UPDATES" >> $GITHUB_OUTPUT
+
+          if [ "$UPDATES" -gt 0 ]; then
+            echo "updates_found=true" >> $GITHUB_OUTPUT
+            echo "update_summary<<EOF" >> $GITHUB_OUTPUT
+            head -30 check_output.txt >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "updates_found=false" >> $GITHUB_OUTPUT
+            echo "update_summary=All data sources up to date" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload check results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: statute-check-results
+          path: check_output.txt
+          retention-days: 14
+
+  report:
+    name: Report results
+    needs: [check-statutes]
+    runs-on: ubuntu-latest
+    if: always()
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Create or update issue
+        if: needs.check-statutes.outputs.updates_found == 'true'
+        uses: actions/github-script@v7
+        env:
+          STATUTE_UPDATES: ${{ needs.check-statutes.outputs.update_count }}
+          STATUTE_SUMMARY: ${{ needs.check-statutes.outputs.update_summary }}
+        with:
+          script: |
+            const statuteUpdates = process.env.STATUTE_UPDATES;
+            const statuteSummary = process.env.STATUTE_SUMMARY;
+
+            const body = [
+              `## Data Freshness Check - ${new Date().toISOString().split('T')[0]}`,
+              '',
+              '## Automated Detection',
+              '',
+              `### Statute Updates (gesetze-im-internet.de)`,
+              `**${statuteUpdates} update(s)** detected.`,
+              '',
+              '```',
+              statuteSummary,
+              '```',
+              '',
+              '**To update:**',
+              '```bash',
+              'npm run auto-update',
+              '# or incrementally:',
+              'npm run ingest:missing',
+              'npm run ingest:cases:missing',
+              'npm run ingest:prep:missing',
+              '```',
+              '',
+              '---',
+              '',
+              '## Manual Review',
+              '',
+              '- [ ] **Case law freshness** — Check rechtsprechung-im-internet.de for new decisions',
+              '- [ ] **Preparatory works** — Check DIP Bundestag for new Wahlperiode documents',
+              '- [ ] **EU legislation** — Check EUR-Lex for new directives/regulations affecting German law',
+              '',
+              '---',
+              '*Automatically created by the daily data freshness checker.*'
+            ].join('\n');
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['data-update']
+            });
+
+            if (issues.data.length > 0) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: body
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Data Freshness: Updates Available',
+                body: body,
+                labels: ['data-update']
+              });
+            }
+
+      - name: Close issue if all up to date
+        if: needs.check-statutes.outputs.updates_found != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['data-update']
+            });
+
+            for (const issue of issues.data) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed',
+                state_reason: 'completed'
+              });
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `All data sources are up to date as of ${new Date().toISOString().split('T')[0]}.`
+              });
+            }
+
+  auto-update:
+    name: Auto-update and publish
+    needs: [check-statutes, report]
+    if: |
+      github.event.inputs.auto_update == 'true' &&
+      needs.check-statutes.outputs.updates_found == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install dependencies
+        run: |
+          npm ci --ignore-scripts
+          pip install requests lxml
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Run auto-update
+        run: python3 scripts/auto_update_german_law.py --quiet
+
+      - name: Bump patch version
+        id: version
+        run: |
+          npm version patch --no-git-tag-version
+          NEW=$(node -p "require('./package.json').version")
+          echo "new_version=$NEW" >> $GITHUB_OUTPUT
+
+      - name: Commit and tag
+        env:
+          NEW_VERSION: ${{ steps.version.outputs.new_version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git add -A
+          git commit -m "chore: auto-update legal data to v${NEW_VERSION}
+
+          Automated update triggered by daily data freshness check.
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+          git tag "v${NEW_VERSION}"
+          git push origin main --tags

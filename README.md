@@ -1,5 +1,11 @@
 # German Law MCP
 
+[![npm version](https://badge.fury.io/js/@ansvar%2Fgerman-law-mcp.svg)](https://www.npmjs.com/package/@ansvar/german-law-mcp)
+[![MCP Registry](https://img.shields.io/badge/MCP-Registry-blue)](https://registry.modelcontextprotocol.io)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![CI](https://github.com/Ansvar-Systems/German-law-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/Ansvar-Systems/German-law-mcp/actions/workflows/ci.yml)
+[![Daily Data Check](https://github.com/Ansvar-Systems/German-law-mcp/actions/workflows/check-updates.yml/badge.svg)](https://github.com/Ansvar-Systems/German-law-mcp/actions/workflows/check-updates.yml)
+
 Germany-first law MCP server built from `template-law-mcp`, following the same quality principles used in the Dutch and Swedish law MCP projects:
 
 - deterministic, source-backed outputs
@@ -142,6 +148,30 @@ See `.env.example`.
 - `GERMAN_LAW_INGEST_CASES_STOP_AFTER_EXISTING`: optional case sync early-stop threshold
 - `GERMAN_LAW_INGEST_PREP_STOP_AFTER_EXISTING`: optional preparatory sync early-stop threshold
 - `GERMAN_LAW_AUTO_UPDATE_*`: defaults for auto-update cycle limits
+
+## CI/CD & Security
+
+This repository uses [GitHub Actions](.github/workflows/) for automated quality and security enforcement:
+
+| Workflow | Schedule | Purpose |
+|----------|----------|---------|
+| [CI](.github/workflows/ci.yml) | Push / PR | Build, test (Node 20/22), type check |
+| [CodeQL](.github/workflows/codeql.yml) | Push / PR / Weekly | Semantic code analysis (security-extended queries) |
+| [Trivy](.github/workflows/trivy.yml) | Push / PR / Daily | Dependency vulnerability scanning (SARIF) |
+| [Semgrep](.github/workflows/semgrep.yml) | Push / PR | SAST — OWASP Top 10, secrets, JS/TS rules |
+| [Gitleaks](.github/workflows/gitleaks.yml) | Push / PR | Secret scanning across full git history |
+| [OSSF Scorecard](.github/workflows/ossf-scorecard.yml) | Push / Weekly | Repository security hygiene scoring |
+| [Socket Security](.github/workflows/socket-security.yml) | Push / PR | Supply chain attack detection |
+| [Docker Security](.github/workflows/docker-security.yml) | Push / PR / Daily | Container image scanning + SBOM (CycloneDX, SPDX) |
+| [Data Freshness](.github/workflows/check-updates.yml) | Daily | gesetze-im-internet.de update check, auto-issue creation |
+| [Publish](.github/workflows/publish.yml) | Tag `v*` | npm publish (with provenance) + MCP Registry |
+| [MCPB Bundle](.github/workflows/mcpb-bundle.yml) | Tag `v*` | MCPB distribution bundle |
+
+## Legal
+
+- License: Apache-2.0
+- Security policy: see `SECURITY.md`
+- Contribution guidelines: see `CONTRIBUTING.md`
 
 ## Architecture and adapter rollout
 
