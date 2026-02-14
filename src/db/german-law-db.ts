@@ -9,6 +9,7 @@ import type {
   SearchResponse,
 } from "../shell/types.js";
 import { buildFtsQueryVariants } from "../utils/fts-query.js";
+import { detectCapabilities, readDbMetadata, type Capability, type DbMetadata } from '../capabilities.js';
 
 const DB_ENV_VAR = "GERMAN_LAW_DB_PATH";
 const DEFAULT_DB_PATH = path.resolve(process.cwd(), "data", "database.db");
@@ -61,6 +62,8 @@ let dbInstance: InstanceType<typeof Database> | null = null;
 let dbAvailabilityChecked = false;
 let dbAvailable = false;
 let resolvedPathCache = "";
+let dbCapabilities: Set<Capability> | null = null;
+let dbMetadata: DbMetadata | null = null;
 
 export function searchGermanLawDocuments(
   query: string,
@@ -570,6 +573,16 @@ export function resetGermanLawDatabaseCache(): void {
   resolvedPathCache = "";
 }
 
+export function getCapabilities(): Set<Capability> {
+  if (!dbCapabilities) getDb();
+  return dbCapabilities ?? new Set();
+}
+
+export function getMetadata(): DbMetadata {
+  if (!dbMetadata) getDb();
+  return dbMetadata ?? { tier: 'unknown', schema_version: '1', built_at: 'unknown', builder: 'unknown' };
+}
+
 function getDb(): InstanceType<typeof Database> | null {
   const resolvedPath = resolveGermanLawDatabasePath();
 
@@ -593,6 +606,10 @@ function getDb(): InstanceType<typeof Database> | null {
   try {
     dbInstance = new Database(resolvedPath, { readonly: true });
     dbAvailable = true;
+    // Detect capabilities on first open
+    dbCapabilities = detectCapabilities(dbInstance);
+    dbMetadata = readDbMetadata(dbInstance);
+    console.error(`[german-law-mcp] Database tier: ${dbMetadata.tier}, capabilities: ${[...dbCapabilities].join(', ')}`);
     return dbInstance;
   } catch {
     return null;

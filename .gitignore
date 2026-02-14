@@ -3,6 +3,7 @@ dist/
 .DS_Store
 .env
 data/*.db
+data/*.db-journal
 data/*.db-wal
 data/*.db-shm
 data/.auto_update.lock
