@@ -22,7 +22,7 @@ import type { ToolName } from '../src/shell/types.js';
 // ---------------------------------------------------------------------------
 
 const SERVER_NAME = 'german-law-mcp';
-const SERVER_VERSION = '0.2.0';
+const SERVER_VERSION = '0.3.0';
 
 // ---------------------------------------------------------------------------
 // Database — downloaded from GitHub Releases on cold start
