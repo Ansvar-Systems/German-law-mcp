@@ -59,7 +59,7 @@
     "write:metadata": "tsx scripts/write-db-metadata.ts",
     "build:db:free": "tsx scripts/build-db-free.ts",
     "build:db:paid": "tsx scripts/build-db-paid.ts",
-    "test": "npm run build && node --test dist/test/**/*.test.js",
+    "test": "npm run build && node --test dist/test/*.test.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "validate": "npm run typecheck && npm test"
   },
