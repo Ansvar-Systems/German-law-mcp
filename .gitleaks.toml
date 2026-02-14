@@ -23,3 +23,8 @@ paths = [
   '''\.env\.local$''',
   '''\.env\..*\.local$''',
 ]
+
+# DIP Bundestag public API key (publicly available at dip.bundestag.de)
+commits = [
+  '''2ef5eb7c41c9bd7a3bd5611fb85ba7a8b69f0b07''',
+]
