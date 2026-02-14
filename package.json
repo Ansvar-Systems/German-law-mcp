@@ -34,10 +34,12 @@
   },
   "devDependencies": {
     "@types/node": "^22.13.4",
+    "@vercel/node": "^5.6.3",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@ansvar/mcp-sqlite": "^1.0.3"
+    "@ansvar/mcp-sqlite": "^1.0.3",
+    "@modelcontextprotocol/sdk": "^1.26.0"
   }
 }
