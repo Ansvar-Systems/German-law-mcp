@@ -32,71 +32,80 @@ Germany-first law MCP server built from `template-law-mcp`, following the same q
   - legal stance bundles (`law.build_legal_stance`)
   - EU linkage/compliance tools (`law.get_eu_basis`, `law.search_eu_implementations`, `law.get_national_implementations`, `law.get_provision_eu_basis`, `law.validate_eu_compliance`)
 
-## Quick start
+## Quick Start
 
-```bash
-npm install
-npm run validate
+### Use Remotely (No Install Needed)
+
+> Connect directly to the hosted version — zero dependencies, nothing to install.
+
+**Endpoint:** `https://german-law-mcp.vercel.app/mcp`
+
+| Client | How to Connect |
+|--------|---------------|
+| **Claude.ai** | Settings > Connectors > Add Integration > paste URL |
+| **Claude Code** | `claude mcp add german-law --transport http https://german-law-mcp.vercel.app/mcp` |
+| **Claude Desktop** | Add to config (see below) |
+| **GitHub Copilot** | Add to VS Code settings (see below) |
+
+**Claude Desktop** — add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "german-law": {
+      "type": "url",
+      "url": "https://german-law-mcp.vercel.app/mcp"
+    }
+  }
+}
 ```
 
-Run a tool call from stdin JSON:
+**GitHub Copilot** — add to VS Code `settings.json`:
 
-```bash
-echo '{"name":"law.list_countries","arguments":{}}' | npm run dev
+```json
+{
+  "github.copilot.chat.mcp.servers": {
+    "german-law": {
+      "type": "http",
+      "url": "https://german-law-mcp.vercel.app/mcp"
+    }
+  }
+}
 ```
 
-Dry-run ingestion scope from official TOC:
+### Use Locally (npm)
 
 ```bash
-python3 scripts/ingest_gesetze_im_internet.py --dry-run
+npx @ansvar/german-law-mcp
 ```
 
-Start ingestion:
+**Claude Desktop** — add to `claude_desktop_config.json`:
 
-```bash
-python3 scripts/ingest_gesetze_im_internet.py
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "german-law": {
+      "command": "npx",
+      "args": ["-y", "@ansvar/german-law-mcp"]
+    }
+  }
+}
 ```
 
-Ingest case law:
+**Cursor / VS Code:**
 
-```bash
-python3 scripts/ingest_rechtsprechung_im_internet.py --only-missing
-```
-
-Ingest preparatory works (current Bundestag period by default):
-
-```bash
-python3 scripts/ingest_dip_bundestag.py --only-missing
-```
-
-Ingest a subset first:
-
-```bash
-python3 scripts/ingest_gesetze_im_internet.py --max-laws 50
-```
-
-Ingest only laws missing from your local DB:
-
-```bash
-npm run ingest:missing
-```
-
-Run all sources incrementally:
-
-```bash
-npm run ingest:all:missing
-```
-
-Run one incremental auto-update cycle:
-
-```bash
-npm run auto-update
-```
-
-Run continuous update loop (every 30 minutes):
-
-```bash
-npm run auto-update:daemon
+```json
+{
+  "mcp.servers": {
+    "german-law": {
+      "command": "npx",
+      "args": ["-y", "@ansvar/german-law-mcp"]
+    }
+  }
+}
 ```
 
 ## Core tools
