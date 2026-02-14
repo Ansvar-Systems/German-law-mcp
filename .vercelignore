@@ -1,0 +1,7 @@
+data/
+scripts/
+test/
+*.md
+Dockerfile
+.gitignore
+tsconfig.json
