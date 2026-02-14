@@ -111,9 +111,9 @@ export function isProfessionalCapability(cap: Capability): boolean {
 /** Human-readable upgrade prompt for gated features. */
 export function upgradeMessage(feature: string): string {
   return (
-    `The "${feature}" feature requires the Professional tier of the German Law MCP. ` +
-    `Upgrade to the Professional tier for full-text case law, preparatory works, ` +
-    `and agency guidance. Contact hello@ansvar.ai for details.`
+    `${feature} is not available in this free community instance. ` +
+    `The full case law and preparatory works databases are too large to serve from a free hosted endpoint. ` +
+    `These datasets are included when Ansvar delivers consulting services, and may become available as a separate paid service in the future.`
   );
 }
 

@@ -193,18 +193,13 @@ describe('upgradeMessage', () => {
     assert.ok(msg.includes('expanded case law'));
   });
 
-  it('should mention Professional tier', () => {
+  it('should explain size constraint', () => {
     const msg = upgradeMessage('anything');
-    assert.ok(msg.includes('Professional tier'));
+    assert.ok(msg.includes('too large to serve from a free hosted endpoint'));
   });
 
-  it('should mention German Law MCP', () => {
+  it('should mention consulting services', () => {
     const msg = upgradeMessage('anything');
-    assert.ok(msg.includes('German Law MCP'));
-  });
-
-  it('should include contact info', () => {
-    const msg = upgradeMessage('anything');
-    assert.ok(msg.includes('hello@ansvar.ai'));
+    assert.ok(msg.includes('Ansvar delivers consulting services'));
   });
 });
