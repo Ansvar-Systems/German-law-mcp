@@ -190,7 +190,7 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     const shell = LawMcpShell.fromAdapters(BUILTIN_ADAPTERS);
 
     const searchResult = await shell.handleToolCall({
-      name: "law.search_documents",
+      name: "law_search_documents",
       arguments: { country: "de", query: "datenschutz", limit: 5 },
     });
 
@@ -200,7 +200,7 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     assert.equal(payload.documents.some((doc) => doc.id === "bdsg:1"), true);
 
     const getResult = await shell.handleToolCall({
-      name: "law.get_document",
+      name: "law_get_document",
       arguments: { country: "de", id: "bdsg:1" },
     });
 
@@ -208,7 +208,7 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     assert.equal((getResult.data as { id: string }).id, "bdsg:1");
 
     const citationSearchResult = await shell.handleToolCall({
-      name: "law.search_documents",
+      name: "law_search_documents",
       arguments: { country: "de", query: "§ 1 BDSG", limit: 2 },
     });
     assert.equal(citationSearchResult.ok, true);
@@ -218,21 +218,21 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     assert.equal(citationSearchPayload.documents[0]?.id, "bdsg:1");
 
     const validCitationResult = await shell.handleToolCall({
-      name: "law.validate_citation",
+      name: "law_validate_citation",
       arguments: { country: "de", citation: "§ 1 BDSG" },
     });
     assert.equal(validCitationResult.ok, true);
     assert.equal((validCitationResult.data as { valid: boolean }).valid, true);
 
     const missingCitationResult = await shell.handleToolCall({
-      name: "law.validate_citation",
+      name: "law_validate_citation",
       arguments: { country: "de", citation: "§ 999 BDSG" },
     });
     assert.equal(missingCitationResult.ok, true);
     assert.equal((missingCitationResult.data as { valid: boolean }).valid, false);
 
     const caseLawResult = await shell.handleToolCall({
-      name: "law.search_case_law",
+      name: "law_search_case_law",
       arguments: { country: "de", query: "haftung", limit: 5 },
     });
     assert.equal(caseLawResult.ok, true);
@@ -243,7 +243,7 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     assert.equal(caseLawPayload.documents[0]?.kind, "case");
 
     const preparatoryWorksResult = await shell.handleToolCall({
-      name: "law.get_preparatory_works",
+      name: "law_get_preparatory_works",
       arguments: { country: "de", citation: "§ 1 BDSG", limit: 5 },
     });
     assert.equal(preparatoryWorksResult.ok, true);
@@ -254,7 +254,7 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     assert.equal(preparatoryPayload.documents[0]?.kind, "preparatory_work");
 
     const formattedCitationResult = await shell.handleToolCall({
-      name: "law.format_citation",
+      name: "law_format_citation",
       arguments: {
         country: "de",
         citation: "§ 1 Absatz 1 bdsg",
@@ -268,7 +268,7 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     );
 
     const currencyResult = await shell.handleToolCall({
-      name: "law.check_currency",
+      name: "law_check_currency",
       arguments: { country: "de", statuteId: "bdsg" },
     });
     assert.equal(currencyResult.ok, true);
@@ -278,7 +278,7 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     );
 
     const legalStanceResult = await shell.handleToolCall({
-      name: "law.build_legal_stance",
+      name: "law_build_legal_stance",
       arguments: { country: "de", query: "datenschutz", limit: 5 },
     });
     assert.equal(legalStanceResult.ok, true);
@@ -291,7 +291,7 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     );
 
     const euBasisResult = await shell.handleToolCall({
-      name: "law.get_eu_basis",
+      name: "law_get_eu_basis",
       arguments: { country: "de", statuteId: "bdsg", limit: 10 },
     });
     assert.equal(euBasisResult.ok, true);
@@ -306,7 +306,7 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     );
 
     const euSearchResult = await shell.handleToolCall({
-      name: "law.search_eu_implementations",
+      name: "law_search_eu_implementations",
       arguments: { country: "de", query: "datenschutz", limit: 10 },
     });
     assert.equal(euSearchResult.ok, true);
@@ -322,7 +322,7 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     );
 
     const euNationalResult = await shell.handleToolCall({
-      name: "law.get_national_implementations",
+      name: "law_get_national_implementations",
       arguments: { country: "de", euId: "EU 2016/679", limit: 10 },
     });
     assert.equal(euNationalResult.ok, true);
@@ -338,7 +338,7 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     );
 
     const provisionBasisResult = await shell.handleToolCall({
-      name: "law.get_provision_eu_basis",
+      name: "law_get_provision_eu_basis",
       arguments: { country: "de", documentId: "bdsg:1", limit: 10 },
     });
     assert.equal(provisionBasisResult.ok, true);
@@ -353,7 +353,7 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     );
 
     const euComplianceResult = await shell.handleToolCall({
-      name: "law.validate_eu_compliance",
+      name: "law_validate_eu_compliance",
       arguments: { country: "de", euId: "EU 2016/679", statuteId: "bdsg" },
     });
     assert.equal(euComplianceResult.ok, true);

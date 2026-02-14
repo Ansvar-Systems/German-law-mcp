@@ -5,9 +5,9 @@ import { LawMcpShell } from "../src/shell/shell.js";
 
 const shell = LawMcpShell.fromAdapters(BUILTIN_ADAPTERS);
 
-test("law.list_countries returns registered adapters", async () => {
+test("law_list_countries returns registered adapters", async () => {
   const result = await shell.handleToolCall({
-    name: "law.list_countries",
+    name: "law_list_countries",
     arguments: {},
   });
 
@@ -16,9 +16,9 @@ test("law.list_countries returns registered adapters", async () => {
   assert.equal(result.data.length, 1);
 });
 
-test("law.parse_citation parses German paragraph citation", async () => {
+test("law_parse_citation parses German paragraph citation", async () => {
   const result = await shell.handleToolCall({
-    name: "law.parse_citation",
+    name: "law_parse_citation",
     arguments: { country: "de", citation: "§ 823 abs. 1 bgb" },
   });
 
@@ -31,7 +31,7 @@ test("law.parse_citation parses German paragraph citation", async () => {
 
 test("unknown country returns structured error", async () => {
   const result = await shell.handleToolCall({
-    name: "law.describe_country",
+    name: "law_describe_country",
     arguments: { country: "se" },
   });
 
@@ -39,9 +39,9 @@ test("unknown country returns structured error", async () => {
   assert.equal(result.error?.code, "unknown_country");
 });
 
-test("law.get_preparatory_works validates required selector arguments", async () => {
+test("law_get_preparatory_works validates required selector arguments", async () => {
   const result = await shell.handleToolCall({
-    name: "law.get_preparatory_works",
+    name: "law_get_preparatory_works",
     arguments: { country: "de" },
   });
 

@@ -2,10 +2,12 @@ node_modules/
 dist/
 .DS_Store
 .env
-data/*.db
+data/database.db
+data/database-free.db
 data/*.db-journal
 data/*.db-wal
 data/*.db-shm
+data/*.db.gz
 data/.auto_update.lock
 __pycache__/
 .vercel

@@ -27,23 +27,23 @@ export class LawMcpShell {
 
   constructor(private readonly registry: AdapterRegistry) {
     this.handlers = {
-      "law.list_countries": this.listCountries.bind(this),
-      "law.describe_country": this.describeCountry.bind(this),
-      "law.search_documents": this.searchDocuments.bind(this),
-      "law.search_case_law": this.searchCaseLaw.bind(this),
-      "law.get_preparatory_works": this.getPreparatoryWorks.bind(this),
-      "law.format_citation": this.formatCitation.bind(this),
-      "law.check_currency": this.checkCurrency.bind(this),
-      "law.build_legal_stance": this.buildLegalStance.bind(this),
-      "law.get_eu_basis": this.getEuBasis.bind(this),
-      "law.search_eu_implementations": this.searchEuImplementations.bind(this),
-      "law.get_national_implementations": this.getNationalImplementations.bind(this),
-      "law.get_provision_eu_basis": this.getProvisionEuBasis.bind(this),
-      "law.validate_eu_compliance": this.validateEuCompliance.bind(this),
-      "law.get_document": this.getDocument.bind(this),
-      "law.parse_citation": this.parseCitation.bind(this),
-      "law.validate_citation": this.validateCitation.bind(this),
-      "law.run_ingestion": this.runIngestion.bind(this),
+      "law_list_countries": this.listCountries.bind(this),
+      "law_describe_country": this.describeCountry.bind(this),
+      "law_search_documents": this.searchDocuments.bind(this),
+      "law_search_case_law": this.searchCaseLaw.bind(this),
+      "law_get_preparatory_works": this.getPreparatoryWorks.bind(this),
+      "law_format_citation": this.formatCitation.bind(this),
+      "law_check_currency": this.checkCurrency.bind(this),
+      "law_build_legal_stance": this.buildLegalStance.bind(this),
+      "law_get_eu_basis": this.getEuBasis.bind(this),
+      "law_search_eu_implementations": this.searchEuImplementations.bind(this),
+      "law_get_national_implementations": this.getNationalImplementations.bind(this),
+      "law_get_provision_eu_basis": this.getProvisionEuBasis.bind(this),
+      "law_validate_eu_compliance": this.validateEuCompliance.bind(this),
+      "law_get_document": this.getDocument.bind(this),
+      "law_parse_citation": this.parseCitation.bind(this),
+      "law_validate_citation": this.validateCitation.bind(this),
+      "law_run_ingestion": this.runIngestion.bind(this),
     };
   }
 
@@ -457,41 +457,41 @@ export class LawMcpShell {
 
   private countryToolSupport(adapter: CountryAdapter): Record<string, boolean> {
     return {
-      "law.search_documents":
+      "law_search_documents":
         adapter.capabilities.documents &&
         Boolean(adapter.searchDocuments) &&
         Boolean(adapter.getDocument),
-      "law.search_case_law":
+      "law_search_case_law":
         adapter.capabilities.caseLaw && Boolean(adapter.searchCaseLaw),
-      "law.get_preparatory_works":
+      "law_get_preparatory_works":
         adapter.capabilities.preparatoryWorks &&
         Boolean(adapter.getPreparatoryWorks),
-      "law.format_citation":
+      "law_format_citation":
         adapter.capabilities.formatting && Boolean(adapter.formatCitation),
-      "law.check_currency":
+      "law_check_currency":
         adapter.capabilities.currency && Boolean(adapter.checkCurrency),
-      "law.build_legal_stance":
+      "law_build_legal_stance":
         adapter.capabilities.legalStance && Boolean(adapter.buildLegalStance),
-      "law.get_eu_basis":
+      "law_get_eu_basis":
         adapter.capabilities.eu && Boolean(adapter.getEuBasis),
-      "law.search_eu_implementations":
+      "law_search_eu_implementations":
         adapter.capabilities.eu &&
         Boolean(adapter.searchEuImplementations),
-      "law.get_national_implementations":
+      "law_get_national_implementations":
         adapter.capabilities.eu &&
         Boolean(adapter.getNationalImplementations),
-      "law.get_provision_eu_basis":
+      "law_get_provision_eu_basis":
         adapter.capabilities.eu && Boolean(adapter.getProvisionEuBasis),
-      "law.validate_eu_compliance":
+      "law_validate_eu_compliance":
         adapter.capabilities.eu && Boolean(adapter.validateEuCompliance),
-      "law.get_document":
+      "law_get_document":
         adapter.capabilities.documents && Boolean(adapter.getDocument),
-      "law.parse_citation":
+      "law_parse_citation":
         adapter.capabilities.citations &&
         Boolean(adapter.parseCitation),
-      "law.validate_citation":
+      "law_validate_citation":
         adapter.capabilities.citations && Boolean(adapter.validateCitation),
-      "law.run_ingestion":
+      "law_run_ingestion":
         adapter.capabilities.ingestion && Boolean(adapter.runIngestion),
     };
   }

@@ -1,23 +1,23 @@
 export type CountryCode = string;
 
 export type ToolName =
-  | "law.list_countries"
-  | "law.describe_country"
-  | "law.search_documents"
-  | "law.search_case_law"
-  | "law.get_preparatory_works"
-  | "law.format_citation"
-  | "law.check_currency"
-  | "law.build_legal_stance"
-  | "law.get_eu_basis"
-  | "law.search_eu_implementations"
-  | "law.get_national_implementations"
-  | "law.get_provision_eu_basis"
-  | "law.validate_eu_compliance"
-  | "law.get_document"
-  | "law.parse_citation"
-  | "law.validate_citation"
-  | "law.run_ingestion";
+  | "law_list_countries"
+  | "law_describe_country"
+  | "law_search_documents"
+  | "law_search_case_law"
+  | "law_get_preparatory_works"
+  | "law_format_citation"
+  | "law_check_currency"
+  | "law_build_legal_stance"
+  | "law_get_eu_basis"
+  | "law_search_eu_implementations"
+  | "law_get_national_implementations"
+  | "law_get_provision_eu_basis"
+  | "law_validate_eu_compliance"
+  | "law_get_document"
+  | "law_parse_citation"
+  | "law_validate_citation"
+  | "law_run_ingestion";
 
 export interface CountryDescriptor {
   code: CountryCode;

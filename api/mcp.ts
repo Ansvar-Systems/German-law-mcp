@@ -5,16 +5,14 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import * as fs from 'fs';
-import * as https from 'https';
-import * as http from 'http';
-import * as path from 'path';
-import * as zlib from 'zlib';
+import { existsSync, createWriteStream, rmSync, renameSync } from 'fs';
+import { join } from 'path';
 import { pipeline } from 'stream/promises';
+import { createGunzip } from 'zlib';
+import https from 'https';
+import type { IncomingMessage } from 'http';
 
 // Import the shell and adapters from the built output.
-// We construct the shell here instead of importing from src/index.ts to avoid
-// triggering the stdio server's main() entry point.
 import { LawMcpShell } from '../src/shell/shell.js';
 import { germanyAdapter } from '../src/adapters/de.js';
 import type { ToolName } from '../src/shell/types.js';
@@ -27,158 +25,80 @@ const SERVER_NAME = 'german-law-mcp';
 const SERVER_VERSION = '0.2.0';
 
 // ---------------------------------------------------------------------------
-// Database — downloaded from GitHub Releases on cold start, cached in /tmp
+// Database — downloaded from GitHub Releases on cold start
 // ---------------------------------------------------------------------------
 
 const TMP_DB = '/tmp/database.db';
+const TMP_DB_TMP = '/tmp/database.db.tmp';
 const TMP_DB_LOCK = '/tmp/database.db.lock';
 
-const GITHUB_OWNER = 'Ansvar-Systems';
-const GITHUB_REPO = 'German-law-mcp';
-const GITHUB_TAG = `v${SERVER_VERSION}`;
-const ASSET_NAME = 'database.db.gz';
+const GITHUB_REPO = 'Ansvar-Systems/German-law-mcp';
+const RELEASE_TAG = `v${SERVER_VERSION}`;
+const ASSET_NAME = 'database-free.db.gz';
 
 let dbReady = false;
 
-function httpsGetRaw(
-  url: string,
-  headers: Record<string, string>,
-): Promise<http.IncomingMessage> {
-  const parsed = new URL(url);
+function httpsGet(url: string): Promise<IncomingMessage> {
   return new Promise((resolve, reject) => {
     https
-      .get(
-        {
-          hostname: parsed.hostname,
-          path: parsed.pathname + parsed.search,
-          headers: { 'User-Agent': 'german-law-mcp', ...headers },
-        },
-        resolve,
-      )
+      .get(url, { headers: { 'User-Agent': SERVER_NAME } }, resolve)
       .on('error', reject);
   });
 }
 
-async function followRedirects(
-  url: string,
-  headers: Record<string, string>,
-  maxRedirects = 10,
-): Promise<http.IncomingMessage> {
-  let currentUrl = url;
-  for (let i = 0; i < maxRedirects; i++) {
-    const res = await httpsGetRaw(currentUrl, headers);
-    const status = res.statusCode ?? 0;
-    if (status >= 300 && status < 400 && res.headers.location) {
-      currentUrl = res.headers.location;
-      // Don't send auth headers to redirected hosts (e.g. Azure blob storage)
-      headers = {};
-      res.resume();
-      continue;
-    }
-    if (status !== 200) {
-      res.resume();
-      throw new Error(`HTTP ${status} downloading ${currentUrl}`);
-    }
-    return res;
-  }
-  throw new Error('Too many redirects');
-}
-
-async function resolveDownloadUrl(): Promise<{
-  url: string;
-  headers: Record<string, string>;
-}> {
-  // Allow explicit override (e.g. public URL, S3 presigned URL)
-  if (process.env.GERMAN_LAW_DB_URL) {
-    return { url: process.env.GERMAN_LAW_DB_URL, headers: {} };
-  }
-
-  // For public repos, use the direct download URL (no auth needed)
-  const directUrl = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download/${GITHUB_TAG}/${ASSET_NAME}`;
-  const token = process.env.GITHUB_TOKEN;
-
-  if (token) {
-    // If a token is available, use the API for private repo support
-    const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/${GITHUB_TAG}`;
-    const authHeaders = {
-      Authorization: `token ${token}`,
-      Accept: 'application/vnd.github.v3+json',
-    };
-
-    const releaseRes = await followRedirects(apiUrl, authHeaders);
-    const chunks: Buffer[] = [];
-    for await (const chunk of releaseRes) {
-      chunks.push(chunk as Buffer);
-    }
-    const release = JSON.parse(Buffer.concat(chunks).toString('utf-8'));
-    const asset = release.assets?.find(
-      (a: { name: string }) => a.name === ASSET_NAME,
-    );
-    if (!asset) {
-      throw new Error(
-        `Asset "${ASSET_NAME}" not found in release ${GITHUB_TAG}`,
-      );
-    }
-
-    return {
-      url: asset.url as string,
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: 'application/octet-stream',
-      },
-    };
-  }
-
-  // No token — use direct public download URL
-  return { url: directUrl, headers: {} };
-}
-
 async function downloadDatabase(): Promise<void> {
-  const tmpPath = TMP_DB + '.tmp';
-  const { url, headers } = await resolveDownloadUrl();
-  console.log(`[german-law-mcp] Downloading database...`);
+  const url = `https://github.com/${GITHUB_REPO}/releases/download/${RELEASE_TAG}/${ASSET_NAME}`;
 
-  const res = await followRedirects(url, headers);
-  const gunzip = zlib.createGunzip();
-  const fileStream = fs.createWriteStream(tmpPath);
-  await pipeline(res, gunzip, fileStream);
+  let response = await httpsGet(url);
 
-  fs.renameSync(tmpPath, TMP_DB);
-  const size = fs.statSync(TMP_DB).size;
-  console.log(
-    `[german-law-mcp] Database ready (${(size / 1024 / 1024).toFixed(0)} MB)`,
-  );
+  // Follow up to 5 redirects (GitHub redirects to S3)
+  let redirects = 0;
+  while (
+    response.statusCode &&
+    response.statusCode >= 300 &&
+    response.statusCode < 400 &&
+    response.headers.location &&
+    redirects < 5
+  ) {
+    response = await httpsGet(response.headers.location);
+    redirects++;
+  }
+
+  if (response.statusCode !== 200) {
+    throw new Error(
+      `Failed to download database: HTTP ${response.statusCode} from ${url}`,
+    );
+  }
+
+  const gunzip = createGunzip();
+  const out = createWriteStream(TMP_DB_TMP);
+  await pipeline(response, gunzip, out);
+  renameSync(TMP_DB_TMP, TMP_DB);
 }
 
 async function ensureDatabase(): Promise<void> {
   if (dbReady) return;
 
-  // Clean stale lock from previous invocations
-  if (fs.existsSync(TMP_DB_LOCK)) {
-    fs.rmSync(TMP_DB_LOCK, { recursive: true, force: true });
+  // Clean stale artifacts from previous invocations
+  if (existsSync(TMP_DB_LOCK)) {
+    rmSync(TMP_DB_LOCK, { recursive: true, force: true });
   }
 
-  // Check for pre-existing DB (env override or bundled)
-  const envDb = process.env.GERMAN_LAW_DB_PATH;
-  if (envDb && fs.existsSync(envDb)) {
-    if (!fs.existsSync(TMP_DB)) {
-      fs.copyFileSync(envDb, TMP_DB);
+  if (!existsSync(TMP_DB)) {
+    const envDb = process.env.GERMAN_LAW_DB_PATH;
+    if (envDb && existsSync(envDb)) {
+      // Local dev: use env-specified DB directly, no download
+      process.env.GERMAN_LAW_DB_PATH = envDb;
+      dbReady = true;
+      return;
     }
-  } else if (
-    !fs.existsSync(TMP_DB) &&
-    fs.existsSync(path.join(process.cwd(), 'data', 'database.db'))
-  ) {
-    fs.copyFileSync(path.join(process.cwd(), 'data', 'database.db'), TMP_DB);
-  }
 
-  // Download from GitHub Releases if still missing
-  if (!fs.existsSync(TMP_DB)) {
+    console.log('[german-law-mcp] Downloading free-tier database...');
     await downloadDatabase();
+    console.log('[german-law-mcp] Database ready');
   }
 
-  // Point the German adapter's DB module at /tmp so it finds the database
   process.env.GERMAN_LAW_DB_PATH = TMP_DB;
-
   dbReady = true;
 }
 

@@ -1,8 +1,10 @@
-data/*.db
-data/*.db-journal
-data/*.db-wal
-data/*.db-shm
-scripts/
+data/database.db
+data/database.db.gz
+data/database.db-journal
+data/database.db-wal
+data/database.db-shm
+data/.auto_update.lock
+data/seed/
 test/
 Dockerfile
 __pycache__/

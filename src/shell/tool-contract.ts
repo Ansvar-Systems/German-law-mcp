@@ -2,7 +2,7 @@ import type { ToolDefinition } from "./types.js";
 
 export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
-    name: "law.list_countries",
+    name: "law_list_countries",
     description:
       "List available country adapters and their capabilities in this server.",
     inputSchema: {
@@ -12,7 +12,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.describe_country",
+    name: "law_describe_country",
     description:
       "Describe supported data sources and capabilities for one country.",
     inputSchema: {
@@ -25,7 +25,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.search_documents",
+    name: "law_search_documents",
     description: "Search documents (statutes/cases/etc.) in one country.",
     inputSchema: {
       type: "object",
@@ -39,7 +39,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.search_case_law",
+    name: "law_search_case_law",
     description: "Search case law in one country with optional court/date filters.",
     inputSchema: {
       type: "object",
@@ -62,7 +62,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.get_preparatory_works",
+    name: "law_get_preparatory_works",
     description: "Get preparatory works for a country by citation, statute id, or query.",
     inputSchema: {
       type: "object",
@@ -79,7 +79,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.format_citation",
+    name: "law_format_citation",
     description: "Format a legal citation for one country.",
     inputSchema: {
       type: "object",
@@ -96,7 +96,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.check_currency",
+    name: "law_check_currency",
     description:
       "Check whether a statute/citation appears current in the ingested corpus.",
     inputSchema: {
@@ -113,7 +113,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.build_legal_stance",
+    name: "law_build_legal_stance",
     description:
       "Build a structured research bundle from statutes, case law, and preparatory works.",
     inputSchema: {
@@ -130,7 +130,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.get_eu_basis",
+    name: "law_get_eu_basis",
     description: "Get EU references linked to a statute, citation, or document.",
     inputSchema: {
       type: "object",
@@ -151,7 +151,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.search_eu_implementations",
+    name: "law_search_eu_implementations",
     description: "Search EU acts and mapped national implementations.",
     inputSchema: {
       type: "object",
@@ -165,7 +165,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.get_national_implementations",
+    name: "law_get_national_implementations",
     description: "Get national implementations for one EU act id.",
     inputSchema: {
       type: "object",
@@ -179,7 +179,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.get_provision_eu_basis",
+    name: "law_get_provision_eu_basis",
     description: "Get EU references linked to a provision/document id.",
     inputSchema: {
       type: "object",
@@ -193,7 +193,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.validate_eu_compliance",
+    name: "law_validate_eu_compliance",
     description:
       "Validate whether an EU act has mapped national implementations in the corpus.",
     inputSchema: {
@@ -209,7 +209,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.get_document",
+    name: "law_get_document",
     description: "Get a single document by country and id.",
     inputSchema: {
       type: "object",
@@ -222,7 +222,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.parse_citation",
+    name: "law_parse_citation",
     description: "Parse and normalize a legal citation in one country.",
     inputSchema: {
       type: "object",
@@ -235,7 +235,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.validate_citation",
+    name: "law_validate_citation",
     description: "Validate a legal citation in one country.",
     inputSchema: {
       type: "object",
@@ -248,7 +248,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law.run_ingestion",
+    name: "law_run_ingestion",
     description: "Run ingestion/update workflow for one country source.",
     inputSchema: {
       type: "object",
