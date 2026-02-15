@@ -100,7 +100,7 @@ export const germanyAdapter: CountryAdapter = {
   },
   async getDocument(id) {
     const dbDocument = getGermanLawDocumentById(id);
-    if (dbDocument !== undefined) {
+    if (dbDocument !== undefined && dbDocument !== null) {
       return dbDocument;
     }
     return getDocumentFromMemory(GERMAN_LEGISLATION, id);

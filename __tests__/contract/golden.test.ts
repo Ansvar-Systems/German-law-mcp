@@ -95,13 +95,7 @@ function stringifyData(data: unknown): string {
 // Load fixtures & create shell
 // ---------------------------------------------------------------------------
 
-const fixturesPath = join(
-  __dirname,
-  "..",
-  "..",
-  "fixtures",
-  "golden-tests.json",
-);
+const fixturesPath = join(process.cwd(), "fixtures", "golden-tests.json");
 const fixtureContent = readFileSync(fixturesPath, "utf-8");
 const fixture = JSON.parse(fixtureContent) as GoldenTestsFile;
 

@@ -31,11 +31,11 @@
     {
       "id": "de-003",
       "category": "article_retrieval",
-      "description": "Get document for Grundgesetz (GG)",
+      "description": "Get document for Grundgesetz (GG) Art. 1",
       "tool": "law_get_document",
       "input": {
         "country": "de",
-        "id": "gg"
+        "id": "gg-art-1"
       },
       "assertions": {
         "result_not_empty": true,
