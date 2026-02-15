@@ -1,0 +1,66 @@
+# sources.yml — Data provenance metadata
+# Reference: docs/mcp-infrastructure-blueprint.md §3
+
+schema_version: "1.0"
+mcp_name: "German Law MCP"
+jurisdiction: "DE"
+
+sources:
+  - name: "Gesetze im Internet"
+    authority: "German Federal Ministry of Justice (Bundesministerium der Justiz)"
+    official_portal: "https://www.gesetze-im-internet.de"
+    canonical_identifier: "N/A"
+    retrieval_method: "XML_DOWNLOAD"
+    api_documentation: "https://www.gesetze-im-internet.de/hinweise.html"
+    update_frequency: "daily"
+    last_ingested: "2026-02-14"
+    license_or_terms:
+      type: "Government Open Data"
+      url: "https://www.gesetze-im-internet.de/Teilliste_Bundesrecht.html"
+      summary: "German federal statutes published by the Federal Ministry of Justice, free to use"
+    coverage:
+      scope: "All consolidated German federal statutes (Bundesrecht)"
+      limitations: "State (Landes) legislation not included; historical versions may be incomplete"
+    languages:
+      - "de"
+
+  - name: "Rechtsprechung im Internet"
+    authority: "German Federal Courts (Bundesgerichte)"
+    official_portal: "https://www.rechtsprechung-im-internet.de"
+    canonical_identifier: "ECLI (European Case Law Identifier)"
+    retrieval_method: "XML_DOWNLOAD"
+    api_documentation: "N/A"
+    update_frequency: "daily"
+    last_ingested: "2026-02-14"
+    license_or_terms:
+      type: "Government Open Data"
+      url: "https://www.rechtsprechung-im-internet.de"
+      summary: "German federal court decisions, public domain"
+    coverage:
+      scope: "Published decisions from German federal courts (BVerfG, BGH, BVerwG, BAG, BSG, BFH, BPatG)"
+      limitations: "Not all decisions are published; lower court (Landesgerichte) decisions not included"
+    languages:
+      - "de"
+
+  - name: "DIP Bundestag"
+    authority: "German Bundestag (Dokumentations- und Informationssystem)"
+    official_portal: "https://dip.bundestag.de"
+    canonical_identifier: "N/A"
+    retrieval_method: "API"
+    api_documentation: "https://dip.bundestag.de/documents/informationsblatt_zur_dip_api_v01.pdf"
+    update_frequency: "daily"
+    last_ingested: "2026-02-14"
+    license_or_terms:
+      type: "Government Open Data"
+      url: "https://dip.bundestag.de"
+      summary: "Bundestag parliamentary documentation, free to use"
+    coverage:
+      scope: "Parliamentary preparatory works (Drucksachen, Plenarprotokolle) related to federal legislation"
+      limitations: "Bundesrat (upper chamber) documents may be incomplete"
+    languages:
+      - "de"
+
+data_freshness:
+  automated_checks: true
+  check_frequency: "daily"
+  last_verified: "2026-02-14"

@@ -60,8 +60,10 @@
     "build:db:free": "tsx scripts/build-db-free.ts",
     "build:db:paid": "tsx scripts/build-db-paid.ts",
     "test": "npm run build && node --test dist/test/*.test.js",
+    "test:contract": "npm run build && node --test dist/__tests__/contract/*.test.js",
+    "drift:detect": "tsx scripts/drift-detect.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "validate": "npm run typecheck && npm test"
+    "validate": "npm run typecheck && npm test && npm run test:contract"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",

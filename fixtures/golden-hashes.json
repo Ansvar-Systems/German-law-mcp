@@ -1,0 +1,49 @@
+{
+  "$schema": "./golden-hashes.schema.json",
+  "version": "1.0",
+  "mcp_name": "German Law MCP",
+  "jurisdiction": "DE",
+  "description": "Drift detection anchors for stable German provisions. Constitutional articles and fundamental code provisions that rarely change.",
+  "provisions": [
+    {
+      "id": "de-hash-001",
+      "description": "Grundgesetz Art. 1 — human dignity (Menschenwuerde)",
+      "upstream_url": "https://www.gesetze-im-internet.de/gg/art_1.html",
+      "selector_hint": "Art. 1",
+      "expected_sha256": "COMPUTE_ON_FIRST_RUN",
+      "expected_snippet": "Die Wuerde des Menschen ist unantastbar"
+    },
+    {
+      "id": "de-hash-002",
+      "description": "Grundgesetz Art. 20 — constitutional principles (Staatsstrukturprinzipien)",
+      "upstream_url": "https://www.gesetze-im-internet.de/gg/art_20.html",
+      "selector_hint": "Art. 20",
+      "expected_sha256": "COMPUTE_ON_FIRST_RUN",
+      "expected_snippet": "demokratischer und sozialer Bundesstaat"
+    },
+    {
+      "id": "de-hash-003",
+      "description": "BGB § 1 — beginning of legal capacity (Rechtsfahigkeit)",
+      "upstream_url": "https://www.gesetze-im-internet.de/bgb/__1.html",
+      "selector_hint": "§ 1",
+      "expected_sha256": "COMPUTE_ON_FIRST_RUN",
+      "expected_snippet": "Rechtsfahigkeit des Menschen"
+    },
+    {
+      "id": "de-hash-004",
+      "description": "StGB § 1 — legality principle (nulla poena sine lege)",
+      "upstream_url": "https://www.gesetze-im-internet.de/stgb/__1.html",
+      "selector_hint": "§ 1",
+      "expected_sha256": "COMPUTE_ON_FIRST_RUN",
+      "expected_snippet": "Keine Strafe ohne Gesetz"
+    },
+    {
+      "id": "de-hash-005",
+      "description": "Grundgesetz Art. 79(3) — eternity clause (Ewigkeitsklausel)",
+      "upstream_url": "https://www.gesetze-im-internet.de/gg/art_79.html",
+      "selector_hint": "Art. 79 Abs. 3",
+      "expected_sha256": "COMPUTE_ON_FIRST_RUN",
+      "expected_snippet": "Artikel 1 und 20"
+    }
+  ]
+}

@@ -1,0 +1,167 @@
+{
+  "$schema": "./golden-tests.schema.json",
+  "version": "1.0",
+  "mcp_name": "German Law MCP",
+  "description": "Golden contract tests for the German Law MCP. Uses law_ prefixed tool names via LawMcpShell.handleToolCall().",
+  "tests": [
+    {
+      "id": "de-001",
+      "category": "article_retrieval",
+      "description": "List countries returns at least the Germany adapter",
+      "tool": "law_list_countries",
+      "input": {},
+      "assertions": {
+        "result_not_empty": true,
+        "min_results": 1
+      }
+    },
+    {
+      "id": "de-002",
+      "category": "article_retrieval",
+      "description": "Describe Germany returns country metadata",
+      "tool": "law_describe_country",
+      "input": {
+        "country": "de"
+      },
+      "assertions": {
+        "result_not_empty": true,
+        "text_not_empty": true
+      }
+    },
+    {
+      "id": "de-003",
+      "category": "article_retrieval",
+      "description": "Get document for Grundgesetz (GG)",
+      "tool": "law_get_document",
+      "input": {
+        "country": "de",
+        "id": "gg"
+      },
+      "assertions": {
+        "result_not_empty": true,
+        "fields_present": ["id", "title", "country"]
+      }
+    },
+    {
+      "id": "de-004",
+      "category": "search",
+      "description": "Search for 'Datenschutz' returns relevant results",
+      "tool": "law_search_documents",
+      "input": {
+        "country": "de",
+        "query": "Datenschutz"
+      },
+      "assertions": {
+        "result_not_empty": true,
+        "min_results": 1
+      }
+    },
+    {
+      "id": "de-005",
+      "category": "search",
+      "description": "Search for 'Strafrecht' returns criminal law results",
+      "tool": "law_search_documents",
+      "input": {
+        "country": "de",
+        "query": "Strafrecht"
+      },
+      "assertions": {
+        "result_not_empty": true,
+        "min_results": 1
+      }
+    },
+    {
+      "id": "de-006",
+      "category": "citation_roundtrip",
+      "description": "Parse valid German citation for GG",
+      "tool": "law_parse_citation",
+      "input": {
+        "country": "de",
+        "citation": "Art. 1 GG"
+      },
+      "assertions": {
+        "result_not_empty": true,
+        "fields_present": ["normalized"]
+      }
+    },
+    {
+      "id": "de-007",
+      "category": "citation_roundtrip",
+      "description": "Validate German citation for BGB",
+      "tool": "law_validate_citation",
+      "input": {
+        "country": "de",
+        "citation": "§ 823 BGB"
+      },
+      "assertions": {
+        "result_not_empty": true,
+        "fields_present": ["valid"]
+      }
+    },
+    {
+      "id": "de-008",
+      "category": "citation_roundtrip",
+      "description": "Format citation for StGB",
+      "tool": "law_format_citation",
+      "input": {
+        "country": "de",
+        "citation": "§ 263 StGB"
+      },
+      "assertions": {
+        "result_not_empty": true,
+        "text_not_empty": true
+      }
+    },
+    {
+      "id": "de-009",
+      "category": "negative_test",
+      "description": "Unknown country returns structured error",
+      "tool": "law_describe_country",
+      "input": {
+        "country": "xx"
+      },
+      "assertions": {
+        "handles_gracefully": true
+      }
+    },
+    {
+      "id": "de-010",
+      "category": "negative_test",
+      "description": "Invalid citation format returns structured error",
+      "tool": "law_parse_citation",
+      "input": {
+        "country": "de",
+        "citation": "not-a-real-citation-12345"
+      },
+      "assertions": {
+        "handles_gracefully": true
+      }
+    },
+    {
+      "id": "de-011",
+      "category": "negative_test",
+      "description": "Get non-existent document returns null gracefully",
+      "tool": "law_get_document",
+      "input": {
+        "country": "de",
+        "id": "does-not-exist-99999"
+      },
+      "assertions": {
+        "handles_gracefully": true
+      }
+    },
+    {
+      "id": "de-012",
+      "category": "negative_test",
+      "description": "Search with no results handled gracefully",
+      "tool": "law_search_documents",
+      "input": {
+        "country": "de",
+        "query": "xyznonexistentterm99999"
+      },
+      "assertions": {
+        "handles_gracefully": true
+      }
+    }
+  ]
+}
