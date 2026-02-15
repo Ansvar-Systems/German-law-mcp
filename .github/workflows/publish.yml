@@ -53,8 +53,8 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
-      id-token: write
+      contents: write  # Required for GitHub Release SBOM attachment
+      id-token: write  # Required for npm provenance
 
     steps:
       - name: Checkout
@@ -86,6 +86,12 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
 
       - name: Publish to npm
         id: npm-publish
@@ -133,6 +139,15 @@ jobs:
 
       - name: Publish to MCP Registry
         run: mcp-publisher publish
+
+      - name: Attach SBOM to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: sbom.cdx.json
+          append_body: true
+          body: |
+            ### Supply Chain Artifacts
+            - `sbom.cdx.json` — CycloneDX SBOM for this release
 
       - name: Deployment Summary
         env:
