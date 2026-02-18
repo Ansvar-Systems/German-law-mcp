@@ -1,6 +1,6 @@
 {
   "name": "@ansvar/german-law-mcp",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "mcpName": "eu.ansvar/german-law-mcp",
   "description": "German legal research MCP server with statutes, case law, and preparatory works from gesetze-im-internet.de",
   "type": "module",
