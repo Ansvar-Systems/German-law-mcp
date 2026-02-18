@@ -42,6 +42,7 @@ const RELEASE_TAG = process.env.DB_RELEASE_TAG || `v${SERVER_VERSION}`;
 const ASSET_NAME = 'database-free.db.gz';
 
 let dbReady = false;
+let dbDownloadPromise: Promise<void> | null = null;
 
 function httpsGet(url: string): Promise<IncomingMessage> {
   return new Promise((resolve, reject) => {
@@ -84,6 +85,12 @@ async function downloadDatabase(): Promise<void> {
 async function ensureDatabase(): Promise<void> {
   if (dbReady) return;
 
+  // Mutex: if a download is already in flight, wait for it.
+  if (dbDownloadPromise) {
+    await dbDownloadPromise;
+    return;
+  }
+
   // Clean stale artifacts from previous invocations
   if (existsSync(TMP_DB_LOCK)) {
     rmSync(TMP_DB_LOCK, { recursive: true, force: true });
@@ -99,7 +106,12 @@ async function ensureDatabase(): Promise<void> {
     }
 
     console.log('[german-law-mcp] Downloading free-tier database...');
-    await downloadDatabase();
+    dbDownloadPromise = downloadDatabase();
+    try {
+      await dbDownloadPromise;
+    } finally {
+      dbDownloadPromise = null;
+    }
     console.log('[german-law-mcp] Database ready');
   }
 
@@ -134,6 +146,17 @@ export default async function handler(
       version: SERVER_VERSION,
       protocol: 'mcp-streamable-http',
     });
+    return;
+  }
+
+  if (req.method === 'DELETE') {
+    // Stateless server — no sessions to clean up, but acknowledge gracefully.
+    res.status(200).json({ ok: true });
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: `Method ${req.method} not allowed` });
     return;
   }
 

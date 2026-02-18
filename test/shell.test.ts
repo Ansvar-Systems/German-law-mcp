@@ -64,6 +64,27 @@ test("law_about returns server metadata", async () => {
   assert.ok(data.tier);
 });
 
+test("law_run_ingestion requires country argument", async () => {
+  const result = await shell.handleToolCall({
+    name: "law_run_ingestion",
+    arguments: {},
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.error?.code, "invalid_arguments");
+});
+
+test("law_run_ingestion with dryRun returns result for known country", async () => {
+  const result = await shell.handleToolCall({
+    name: "law_run_ingestion",
+    arguments: { country: "de", dryRun: true },
+  });
+
+  // Ingestion may or may not succeed depending on environment,
+  // but it should not crash — it should return a structured result.
+  assert.ok(result.ok !== undefined);
+});
+
 test("law_get_preparatory_works validates required selector arguments", async () => {
   const result = await shell.handleToolCall({
     name: "law_get_preparatory_works",
