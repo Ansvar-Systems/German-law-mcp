@@ -10,7 +10,9 @@ function extractTokens(query: string): string[] {
 }
 
 function escapeExplicitQuery(query: string): string {
-  return query.replace(/[()^:]/g, (char) => `"${char}"`);
+  // Strip double quotes first (they are FTS5 phrase delimiters and cannot
+  // be escaped by wrapping in quotes). Then escape other FTS5 operators.
+  return query.replace(/"/g, "").replace(/[()^:]/g, (char) => `"${char}"`);
 }
 
 function buildPrefixAndQuery(tokens: string[]): string {

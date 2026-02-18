@@ -300,7 +300,8 @@ export function getGermanLawDocumentById(id: string): LawDocument | null | undef
         `,
       )
       .get(id) as StatuteRow | undefined;
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return undefined;
   }
 
@@ -330,7 +331,8 @@ export function getGermanDocumentByAnyId(
       if (statuteRow) {
         return mapStatuteRowToLawDocument(statuteRow);
       }
-    } catch {
+    } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
       return undefined;
     }
   }
@@ -363,7 +365,8 @@ export function getGermanDocumentByAnyId(
       if (caseLawRow) {
         return mapCaseLawRowToLawDocument(caseLawRow);
       }
-    } catch {
+    } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
       return undefined;
     }
   }
@@ -394,7 +397,8 @@ export function getGermanDocumentByAnyId(
       if (preparatoryRow) {
         return mapPreparatoryWorkRowToLawDocument(preparatoryRow);
       }
-    } catch {
+    } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
       return undefined;
     }
   }
@@ -434,7 +438,8 @@ export function getGermanLawDocumentsByStatuteId(
       documents: rows.map(mapStatuteRowToLawDocument),
       total: rows.length,
     };
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -488,7 +493,8 @@ export function getGermanLawDocumentsByCitation(
       documents: rows.map(mapStatuteRowToLawDocument),
       total: rows.length,
     };
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -504,7 +510,8 @@ export function getGermanLawDocumentCount(): number | null {
       .prepare("SELECT COUNT(*) AS count FROM law_documents")
       .get() as { count: number };
     return Number(row.count);
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -520,7 +527,8 @@ export function getGermanCaseLawDocumentCount(): number | null {
       .prepare("SELECT COUNT(*) AS count FROM case_law_documents")
       .get() as { count: number };
     return Number(row.count);
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -536,7 +544,8 @@ export function getGermanPreparatoryWorkCount(): number | null {
       .prepare("SELECT COUNT(*) AS count FROM preparatory_works")
       .get() as { count: number };
     return Number(row.count);
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -554,7 +563,8 @@ export function citationExistsInGermanLawDatabase(citation: string): boolean | n
 
   try {
     return existsByCitation(db, parsed.lookupCitations);
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -611,7 +621,8 @@ function getDb(): InstanceType<typeof Database> | null {
     dbMetadata = readDbMetadata(dbInstance);
     console.error(`[german-law-mcp] Database tier: ${dbMetadata.tier}, capabilities: ${[...dbCapabilities].join(', ')}`);
     return dbInstance;
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -631,7 +642,8 @@ function tableExists(db: InstanceType<typeof Database>, tableName: string): bool
       .get(tableName) as { exists_flag?: number } | undefined;
 
     return Boolean(row?.exists_flag);
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return false;
   }
 }
@@ -656,7 +668,8 @@ function runLawFtsQuery(
       .all(ftsQuery, limit) as StatuteRow[];
 
     return rows;
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -690,7 +703,8 @@ function findExactCitationRows(
         `,
       )
       .all(...citations, citations[0] ?? "", limit) as StatuteRow[];
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -729,7 +743,8 @@ function runLawLikeQuery(
         `,
       )
       .all(...params, limit) as StatuteRow[];
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -774,7 +789,8 @@ function findExactCaseRows(
         `,
       )
       .all(...params) as CaseLawRow[];
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -813,7 +829,8 @@ function runCaseLawFtsQuery(
       .all(ftsQuery, ...filters.params, limit) as CaseLawRow[];
 
     return rows;
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -867,7 +884,8 @@ function runCaseLawLikeQuery(
         `,
       )
       .all(...params, ...filters.params, limit) as CaseLawRow[];
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -904,7 +922,8 @@ function runPreparatoryFtsQuery(
       .all(ftsQuery, ...filters.params, limit) as PreparatoryWorkRow[];
 
     return rows;
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -921,7 +940,7 @@ function runPreparatoryLikeQuery(
 
   for (const token of tokens) {
     const like = `%${token}%`;
-    clauses.push("(title LIKE ? OR statute_citation LIKE ? OR text_snippet LIKE ?)");
+    clauses.push("(p.title LIKE ? OR p.statute_citation LIKE ? OR p.text_snippet LIKE ?)");
     params.push(like, like, like);
   }
 
@@ -931,25 +950,26 @@ function runPreparatoryLikeQuery(
       .prepare(
         `
         SELECT
-          id,
-          country,
-          dip_id,
-          title,
-          statute_id,
-          statute_citation,
-          work_type,
-          publication_date,
-          source_url,
-          text_snippet,
-          metadata_json
-        FROM preparatory_works
+          p.id,
+          p.country,
+          p.dip_id,
+          p.title,
+          p.statute_id,
+          p.statute_citation,
+          p.work_type,
+          p.publication_date,
+          p.source_url,
+          p.text_snippet,
+          p.metadata_json
+        FROM preparatory_works p
         WHERE (${queryClause}) ${filters.clause}
         ORDER BY publication_date DESC, id DESC
         LIMIT ?
         `,
       )
       .all(...params, ...filters.params, limit) as PreparatoryWorkRow[];
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -964,25 +984,26 @@ function runPreparatoryFilteredQuery(
       .prepare(
         `
         SELECT
-          id,
-          country,
-          dip_id,
-          title,
-          statute_id,
-          statute_citation,
-          work_type,
-          publication_date,
-          source_url,
-          text_snippet,
-          metadata_json
-        FROM preparatory_works
+          p.id,
+          p.country,
+          p.dip_id,
+          p.title,
+          p.statute_id,
+          p.statute_citation,
+          p.work_type,
+          p.publication_date,
+          p.source_url,
+          p.text_snippet,
+          p.metadata_json
+        FROM preparatory_works p
         WHERE 1 = 1 ${filters.clause}
         ORDER BY publication_date DESC, id DESC
         LIMIT ?
         `,
       )
       .all(...filters.params, limit) as PreparatoryWorkRow[];
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -1060,7 +1081,7 @@ function buildPreparatoryFilterSql(
   const params: SqlParam[] = [];
 
   if (request.statuteId?.trim()) {
-    clauses.push("AND lower(statute_id) = ?");
+    clauses.push("AND lower(p.statute_id) = ?");
     params.push(request.statuteId.trim().toLowerCase());
   }
 
@@ -1077,8 +1098,9 @@ function buildPreparatoryFilterSql(
     if (tokens.length > 0) {
       const tokenClauses: string[] = [];
       for (const token of tokens) {
+        // Use table-qualified names to avoid ambiguity in FTS JOIN queries
         tokenClauses.push(
-          "(lower(statute_citation) LIKE ? OR lower(title) LIKE ? OR lower(text_snippet) LIKE ?)",
+          "(lower(p.statute_citation) LIKE ? OR lower(p.title) LIKE ? OR lower(p.text_snippet) LIKE ?)",
         );
         const like = `%${token}%`;
         params.push(like, like, like);
@@ -1246,7 +1268,8 @@ function parseMetadata(
       return {};
     }
     return parsed as Record<string, string | number | boolean | null>;
-  } catch {
+  } catch (err) {
+    console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return {};
   }
 }

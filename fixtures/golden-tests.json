@@ -162,6 +162,56 @@
       "assertions": {
         "handles_gracefully": true
       }
+    },
+    {
+      "id": "de-013",
+      "category": "provenance",
+      "description": "List sources returns German data provenance",
+      "tool": "law_list_sources",
+      "input": {
+        "country": "de"
+      },
+      "assertions": {
+        "result_not_empty": true,
+        "min_results": 3
+      }
+    },
+    {
+      "id": "de-014",
+      "category": "provenance",
+      "description": "About returns server metadata with version and tier",
+      "tool": "law_about",
+      "input": {},
+      "assertions": {
+        "result_not_empty": true,
+        "fields_present": ["server", "version", "tier"]
+      }
+    },
+    {
+      "id": "de-015",
+      "category": "search",
+      "description": "Search with special German characters (ü, ö, ä, ß)",
+      "tool": "law_search_documents",
+      "input": {
+        "country": "de",
+        "query": "Kündigungsschutzgesetz"
+      },
+      "assertions": {
+        "handles_gracefully": true
+      }
+    },
+    {
+      "id": "de-016",
+      "category": "negative_test",
+      "description": "SQL injection attempt is handled safely",
+      "tool": "law_search_documents",
+      "input": {
+        "country": "de",
+        "query": "'; DROP TABLE law_documents; --"
+      },
+      "assertions": {
+        "handles_gracefully": true
+      }
     }
   ]
 }
