@@ -5,7 +5,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { existsSync, createWriteStream, rmSync, renameSync } from 'fs';
+import { existsSync, createWriteStream, rmSync, renameSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { pipeline } from 'stream/promises';
 import { createGunzip } from 'zlib';
@@ -22,8 +22,12 @@ import type { ToolName } from '../src/shell/types.js';
 // Server identity
 // ---------------------------------------------------------------------------
 
+const pkg = JSON.parse(
+  readFileSync(join(__dirname, '..', 'package.json'), 'utf8'),
+) as { version: string };
+
 const SERVER_NAME = 'german-law-mcp';
-const SERVER_VERSION = '0.3.0';
+const SERVER_VERSION = pkg.version;
 
 // ---------------------------------------------------------------------------
 // Database — downloaded from GitHub Releases on cold start
@@ -34,7 +38,7 @@ const TMP_DB_TMP = '/tmp/database.db.tmp';
 const TMP_DB_LOCK = '/tmp/database.db.lock';
 
 const GITHUB_REPO = 'Ansvar-Systems/German-law-mcp';
-const RELEASE_TAG = `v${SERVER_VERSION}`;
+const RELEASE_TAG = process.env.DB_RELEASE_TAG || `v${SERVER_VERSION}`;
 const ASSET_NAME = 'database-free.db.gz';
 
 let dbReady = false;

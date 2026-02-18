@@ -1,7 +1,26 @@
+import { readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { upgradeMessage } from "../capabilities.js";
+import {
+  getGermanLawDocumentCount,
+  getGermanCaseLawDocumentCount,
+  getGermanPreparatoryWorkCount,
+  getMetadata,
+} from "../db/german-law-db.js";
 import { AdapterRegistry } from "./adapter-registry.js";
 import { ShellError, toShellError } from "./errors.js";
 import { TOOL_DEFINITIONS } from "./tool-contract.js";
+
+let SERVER_VERSION = "0.0.0";
+try {
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const pkgPath = join(__dirname, "..", "..", "package.json");
+  const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { version: string };
+  SERVER_VERSION = pkg.version;
+} catch {
+  // Fallback: version stays 0.0.0 if package.json cannot be read
+}
 import type {
   CaseLawSearchRequest,
   CitationFormatRequest,
@@ -44,6 +63,8 @@ export class LawMcpShell {
       "law_get_document": this.getDocument.bind(this),
       "law_parse_citation": this.parseCitation.bind(this),
       "law_validate_citation": this.validateCitation.bind(this),
+      "law_list_sources": this.listSources.bind(this),
+      "law_about": this.about.bind(this),
       "law_run_ingestion": this.runIngestion.bind(this),
     };
   }
@@ -345,6 +366,91 @@ export class LawMcpShell {
     return adapter.validateCitation!(citation);
   }
 
+  private async listSources(args: Record<string, unknown>): Promise<unknown> {
+    const countryCode = requireString(args, "country");
+    const adapter = this.registry.get(countryCode);
+
+    return {
+      country: adapter.country.code,
+      sources: [
+        {
+          name: "Gesetze im Internet",
+          url: "https://www.gesetze-im-internet.de",
+          description:
+            "Official portal of the German Federal Ministry of Justice. " +
+            "Provides consolidated texts of all German federal statutes and regulations.",
+          scope: "All consolidated German federal statutes (Bundesgesetze)",
+          limitations: "Does not include state (Länder) legislation.",
+          format: "XML download",
+          updateFrequency: "Daily",
+          authority: "Federal Ministry of Justice (BMJ)",
+        },
+        {
+          name: "Rechtsprechung im Internet",
+          url: "https://www.rechtsprechung-im-internet.de",
+          description:
+            "Official portal for published decisions of German federal courts.",
+          scope:
+            "BVerfG, BGH, BVerwG, BAG, BSG, BFH, BPatG decisions",
+          limitations:
+            "Not all decisions are published. Lower court (Landesgerichte) decisions are not included.",
+          format: "XML download",
+          updateFrequency: "Daily",
+          authority: "German Federal Courts",
+        },
+        {
+          name: "DIP Bundestag",
+          url: "https://dip.bundestag.de",
+          description:
+            "Documentation and Information System of the German Bundestag. " +
+            "Provides legislative preparatory works including Drucksachen and Plenarprotokolle.",
+          scope:
+            "Drucksachen and Plenarprotokolle for Wahlperioden 19 and 20",
+          limitations:
+            "Bundesrat documents may be incomplete. Earlier Wahlperioden not yet ingested.",
+          format: "REST API",
+          updateFrequency: "Daily",
+          authority: "German Bundestag",
+        },
+      ],
+    };
+  }
+
+  private async about(): Promise<unknown> {
+    const dbMeta = getMetadata();
+    const statuteCount = getGermanLawDocumentCount();
+    const caseCount = getGermanCaseLawDocumentCount();
+    const prepCount = getGermanPreparatoryWorkCount();
+
+    return {
+      server: "german-law-mcp",
+      version: SERVER_VERSION,
+      description:
+        "German legal research MCP server providing access to federal statutes, " +
+        "court decisions, and legislative preparatory works from official German government sources.",
+      jurisdiction: "DE",
+      language: "de",
+      tier: dbMeta.tier,
+      database: {
+        schema_version: dbMeta.schema_version,
+        built_at: dbMeta.built_at,
+        builder: dbMeta.builder,
+      },
+      statistics: {
+        statutes: statuteCount,
+        case_law_decisions: caseCount,
+        preparatory_works: prepCount,
+      },
+      data_sources: [
+        "gesetze-im-internet.de",
+        "rechtsprechung-im-internet.de",
+        "dip.bundestag.de",
+      ],
+      transports: ["stdio", "streamable-http"],
+      repository: "https://github.com/Ansvar-Systems/German-law-mcp",
+    };
+  }
+
   private async runIngestion(args: Record<string, unknown>): Promise<unknown> {
     const adapter = this.requireIngestionAdapter(args);
     const sourceId = optionalString(args, "sourceId");
@@ -526,6 +632,8 @@ export class LawMcpShell {
         Boolean(adapter.parseCitation),
       "law_validate_citation":
         adapter.capabilities.citations && Boolean(adapter.validateCitation),
+      "law_list_sources": true,
+      "law_about": true,
       "law_run_ingestion":
         adapter.capabilities.ingestion && Boolean(adapter.runIngestion),
     };

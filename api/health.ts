@@ -1,7 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+const pkg = JSON.parse(
+  readFileSync(join(__dirname, '..', 'package.json'), 'utf8'),
+) as { version: string };
 
 const SERVER_NAME = 'german-law-mcp';
-const SERVER_VERSION = '0.3.0';
+const SERVER_VERSION = pkg.version;
 const REPO_URL = 'https://github.com/Ansvar-Systems/German-law-mcp';
 const FRESHNESS_MAX_DAYS = 30;
 

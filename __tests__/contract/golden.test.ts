@@ -209,11 +209,16 @@ describe(`Contract tests: ${fixture.mcp_name}`, () => {
           })) as ToolResult;
 
           const data = result.data;
+          const record = data as Record<string, unknown> | undefined;
           const items = Array.isArray(data)
             ? data
-            : Array.isArray((data as Record<string, unknown>)?.documents)
-              ? (data as Record<string, unknown>).documents
-              : [];
+            : Array.isArray(record?.documents)
+              ? record.documents
+              : Array.isArray(record?.sources)
+                ? record.sources
+                : Array.isArray(record?.results)
+                  ? record.results
+                  : [];
           assert.ok(
             (items as unknown[]).length >= test.assertions.min_results!,
             `Expected at least ${test.assertions.min_results} results`,

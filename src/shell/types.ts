@@ -17,6 +17,8 @@ export type ToolName =
   | "law_get_document"
   | "law_parse_citation"
   | "law_validate_citation"
+  | "law_list_sources"
+  | "law_about"
   | "law_run_ingestion";
 
 export interface CountryDescriptor {
