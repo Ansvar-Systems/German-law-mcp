@@ -219,11 +219,11 @@ export default async function handler(
     });
 
     const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined,
       enableJsonResponse: true,
     });
 
-    await server.connect(transport);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SDK type mismatch with exactOptionalPropertyTypes
+    await server.connect(transport as any);
     await transport.handleRequest(req, res, req.body);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
