@@ -23,9 +23,19 @@ function detectCapabilityNames(): string[] {
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   const url = new URL(req.url ?? '/', `https://${req.headers.host}`);
-  const meta = getMetadata();
+
+  // DB may not be available on cold start (Strategy B: runtime download).
+  // Degrade gracefully — health should always respond, even without DB.
+  let meta: ReturnType<typeof getMetadata>;
+  let capabilities: string[];
+  try {
+    meta = getMetadata();
+    capabilities = detectCapabilityNames();
+  } catch {
+    meta = { tier: 'unknown', schema_version: '1', built_at: 'unknown', builder: 'unknown' };
+    capabilities = ['statutes'];
+  }
   const tier = meta.tier === 'unknown' ? 'free' : meta.tier;
-  const capabilities = detectCapabilityNames();
 
   if (url.pathname === '/version' || url.searchParams.has('version')) {
     res.status(200).json({
