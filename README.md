@@ -1,42 +1,41 @@
-# German Law MCP
+# German Law MCP Server
+
+**The gesetze-im-internet.de alternative for the AI age.**
 
 [![npm version](https://badge.fury.io/js/@ansvar%2Fgerman-law-mcp.svg)](https://www.npmjs.com/package/@ansvar/german-law-mcp)
 [![MCP Registry](https://img.shields.io/badge/MCP-Registry-blue)](https://registry.modelcontextprotocol.io)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![GitHub stars](https://img.shields.io/github/stars/Ansvar-Systems/German-law-mcp?style=social)](https://github.com/Ansvar-Systems/German-law-mcp)
 [![CI](https://github.com/Ansvar-Systems/German-law-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/Ansvar-Systems/German-law-mcp/actions/workflows/ci.yml)
 [![Daily Data Check](https://github.com/Ansvar-Systems/German-law-mcp/actions/workflows/check-updates.yml/badge.svg)](https://github.com/Ansvar-Systems/German-law-mcp/actions/workflows/check-updates.yml)
 
-Germany-first law MCP server built from `template-law-mcp`, following the same quality principles used in the Dutch and Swedish law MCP projects:
+Query **6,870 German federal statutes** -- from the BGB and StGB to the GG, BDSG, and more -- directly from Claude, Cursor, or any MCP-compatible client.
 
-- deterministic, source-backed outputs
-- explicit citation parsing and validation
-- test-gated behavior with no speculative legal citations
-- practical current-law retrieval (not deep historical versioning by default)
+If you're building legal tech, compliance tools, or doing German legal research, this is your verified reference database.
 
-## Current status
+Built by [Ansvar Systems](https://ansvar.eu) -- Stockholm, Sweden
 
-- Runtime shell is in place.
-- `de` adapter is implemented and registered.
-- Three source lanes are wired:
-  - statutes: `gesetze-im-internet`
-  - case law: `rechtsprechung-im-internet`
-  - preparatory works: `dip-bundestag`
-- German citation validation currently supports:
-  - `§ 823 Abs. 1 BGB`
-  - `Art. 1 Abs. 1 GG`
-- SQLite-backed corpus is supported (`GERMAN_LAW_DB_PATH`).
-- Initial sample legislation remains as fallback when no database is present.
-- Advanced helpers are enabled:
-  - citation formatting (`law.format_citation`)
-  - currency checks (`law.check_currency`)
-  - legal stance bundles (`law.build_legal_stance`)
-  - EU linkage/compliance tools (`law.get_eu_basis`, `law.search_eu_implementations`, `law.get_national_implementations`, `law.get_provision_eu_basis`, `law.validate_eu_compliance`)
+---
+
+## Why This Exists
+
+German legal research is scattered across gesetze-im-internet.de, dejure.org, rechtsprechung-im-internet.de, and DIP Bundestag. Whether you're:
+- A **Rechtsanwalt** validating citations in a Schriftsatz or contract
+- A **compliance officer** checking if a statute is still in force
+- A **legal tech developer** building tools on German law
+- A **researcher** tracing legislative history from Drucksache to statute
+
+...you shouldn't need 47 browser tabs and manual PDF cross-referencing. Ask Claude. Get the exact provision. With context.
+
+This MCP server makes German law **searchable, cross-referenceable, and AI-readable**.
+
+---
 
 ## Quick Start
 
 ### Use Remotely (No Install Needed)
 
-> Connect directly to the hosted version — zero dependencies, nothing to install.
+> Connect directly to the hosted version -- zero dependencies, nothing to install.
 
 **Endpoint:** `https://german-law-mcp.vercel.app/mcp`
 
@@ -47,7 +46,7 @@ Germany-first law MCP server built from `template-law-mcp`, following the same q
 | **Claude Desktop** | Add to config (see below) |
 | **GitHub Copilot** | Add to VS Code settings (see below) |
 
-**Claude Desktop** — add to `claude_desktop_config.json`:
+**Claude Desktop** -- add to `claude_desktop_config.json`:
 
 ```json
 {
@@ -60,7 +59,7 @@ Germany-first law MCP server built from `template-law-mcp`, following the same q
 }
 ```
 
-**GitHub Copilot** — add to VS Code `settings.json`:
+**GitHub Copilot** -- add to VS Code `settings.json`:
 
 ```json
 {
@@ -79,7 +78,7 @@ Germany-first law MCP server built from `template-law-mcp`, following the same q
 npx @ansvar/german-law-mcp
 ```
 
-**Claude Desktop** — add to `claude_desktop_config.json`:
+**Claude Desktop** -- add to `claude_desktop_config.json`:
 
 **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
 **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
@@ -108,73 +107,160 @@ npx @ansvar/german-law-mcp
 }
 ```
 
-## Core tools
+## Example Queries
 
-- `law.list_countries`
-- `law.describe_country`
-- `law.search_documents`
-- `law.search_case_law`
-- `law.get_preparatory_works`
-- `law.format_citation`
-- `law.check_currency`
-- `law.build_legal_stance`
-- `law.get_eu_basis`
-- `law.search_eu_implementations`
-- `law.get_national_implementations`
-- `law.get_provision_eu_basis`
-- `law.validate_eu_compliance`
-- `law.get_document`
-- `law.parse_citation`
-- `law.validate_citation`
-- `law.run_ingestion`
+Once connected, just ask naturally:
 
-## 100% accuracy roadmap
+- *"Was sagt § 823 Abs. 1 BGB über Schadensersatz?"*
+- *"Ist das BDSG 2018 noch in Kraft?"*
+- *"Find provisions about Datenschutz in German law"*
+- *"What EU directives does the BDSG implement?"*
+- *"Which German laws implement the GDPR?"*
+- *"Get the preparatory works for the IT-Sicherheitsgesetz"*
+- *"Validate the citation § 433 BGB"*
+- *"Search for Kündigungsschutz in case law"*
+- *"Compare DSGVO implementation across German statutes"*
 
-Execution plan and acceptance gates are documented in:
+---
 
-- `docs/ACCURACY_PLAN.md`
-- `docs/IMPLEMENTATION_STATUS.md`
+## What's Included
 
-This roadmap is designed to bring German coverage and reliability to production parity with the Dutch and Swedish MCPs.
+| Category | Count | Details |
+|----------|-------|---------|
+| **Statutes** | 6,870 laws | Complete German federal legislation |
+| **Provisions** | 91,843 sections | Full-text searchable with FTS5 |
+| **Case Law** | 5,000 decisions | BVerfG, BGH, BVerwG, BAG, BSG, BFH, BPatG |
+| **Preparatory Works** | 89,423 records | Drucksachen + Plenarprotokolle (WP 19 + 20) |
+| **Database Size** | ~300 MB | Runtime download on cold start (Strategy B) |
+| **Daily Updates** | Automated | Freshness checks against gesetze-im-internet.de |
 
-Current ingestion status (February 14, 2026):
+**Verified data only** -- every provision is ingested from official government sources. Zero LLM-generated content.
 
-- statutes: `6870/6870` TOC coverage (`91843` provisions)
-- case law: `5000` recent decisions ingested (latest-first practical window)
-- preparatory works: `89423` DIP records (Wahlperiode `19` + `20`)
+---
 
-## Environment
+## See It In Action
 
-See `.env.example`.
+### Why This Works
 
-- `LAW_COUNTRIES`: comma-separated country filter (example: `de`)
-- `GERMAN_LAW_DB_PATH`: override SQLite path (default `data/database.db`)
-- `GERMAN_LAW_INGEST_MAX_LAWS`: optional cap used by `law.run_ingestion`
-- `GERMAN_LAW_INGEST_MAX_CASES`: optional cap for case-law ingestion
-- `GERMAN_LAW_INGEST_MAX_PREP_WORKS`: optional cap for preparatory-works ingestion
-- `GERMAN_LAW_PREP_WAHLPERIODEN`: comma-separated DIP Wahlperioden (default `20`)
-- `GERMAN_LAW_DIP_API_KEY`: optional DIP API key override
-- `GERMAN_LAW_INGEST_CASES_STOP_AFTER_EXISTING`: optional case sync early-stop threshold
-- `GERMAN_LAW_INGEST_PREP_STOP_AFTER_EXISTING`: optional preparatory sync early-stop threshold
-- `GERMAN_LAW_AUTO_UPDATE_*`: defaults for auto-update cycle limits
+**Verbatim Source Text (No LLM Processing):**
+- All statute text is ingested from gesetze-im-internet.de official XML exports
+- Provisions are returned **unchanged** from SQLite FTS5 database rows
+- Zero LLM summarization or paraphrasing -- the database contains regulation text, not AI interpretations
 
-## CI/CD & Security
+**Smart Context Management:**
+- Search returns ranked provisions with BM25 scoring (safe for context)
+- Three-tier search strategy: exact citation match → FTS5 full-text → LIKE fallback
+- Cross-references help navigate without loading everything at once
 
-This repository uses [GitHub Actions](.github/workflows/) for automated quality and security enforcement:
+**Technical Architecture:**
+```
+gesetze-im-internet.de → Parse XML → SQLite → FTS5 snippet() → MCP response
+                  ↑                          ↑
+           Provision parser           Verbatim database query
+```
 
-| Workflow | Schedule | Purpose |
-|----------|----------|---------|
-| [CI](.github/workflows/ci.yml) | Push / PR | Build, test (Node 20/22), type check |
-| [CodeQL](.github/workflows/codeql.yml) | Push / PR / Weekly | Semantic code analysis (security-extended queries) |
-| [Trivy](.github/workflows/trivy.yml) | Push / PR / Daily | Dependency vulnerability scanning (SARIF) |
-| [Semgrep](.github/workflows/semgrep.yml) | Push / PR | SAST — OWASP Top 10, secrets, JS/TS rules |
-| [Gitleaks](.github/workflows/gitleaks.yml) | Push / PR | Secret scanning across full git history |
-| [OSSF Scorecard](.github/workflows/ossf-scorecard.yml) | Push / Weekly | Repository security hygiene scoring |
-| [Socket Security](.github/workflows/socket-security.yml) | Push / PR | Supply chain attack detection |
-| [Docker Security](.github/workflows/docker-security.yml) | Push / PR / Daily | Container image scanning + SBOM (CycloneDX, SPDX) |
-| [Data Freshness](.github/workflows/check-updates.yml) | Daily | gesetze-im-internet.de update check, auto-issue creation |
-| [Publish](.github/workflows/publish.yml) | Tag `v*` | npm publish (with provenance) + MCP Registry |
-| [MCPB Bundle](.github/workflows/mcpb-bundle.yml) | Tag `v*` | MCPB distribution bundle |
+### Traditional Research vs. This MCP
+
+| Traditional Approach | This MCP Server |
+|---------------------|-----------------|
+| Search gesetze-im-internet.de by law name | Search by plain German: *"Datenschutz Arbeitnehmer"* |
+| Navigate multi-section statutes manually | Get the exact provision with context |
+| Manual cross-referencing between laws | `law_build_legal_stance` aggregates across sources |
+| "Is this statute still in force?" → check manually | `law_check_currency` → answer in seconds |
+| Find EU basis → dig through EUR-Lex | `law_get_eu_basis` → linked EU directives instantly |
+| Check DIP Bundestag for legislative history | `law_get_preparatory_works` → structured results |
+| No API, no integration | MCP protocol → AI-native |
+
+**Traditional:** Search gesetze-im-internet.de → Download XML → Ctrl+F → Cross-reference with Drucksache → Check EUR-Lex for EU basis → Repeat
+
+**This MCP:** *"What EU law is the basis for § 1 BDSG?"* → Done.
+
+---
+
+## Available Tools (19)
+
+### Core Legal Research Tools (8)
+
+| Tool | Description |
+|------|-------------|
+| `law_search_documents` | FTS5 search on 91,843 provisions with BM25 ranking |
+| `law_get_document` | Retrieve specific provision by document ID |
+| `law_search_case_law` | Search 5,000 federal court decisions with court/date filters |
+| `law_get_preparatory_works` | Get Drucksachen and Plenarprotokolle for a statute |
+| `law_validate_citation` | Validate citation against database (zero-hallucination check) |
+| `law_build_legal_stance` | Aggregate citations from statutes, case law, prep works |
+| `law_format_citation` | Format citations per German conventions (default/short/pinpoint) |
+| `law_check_currency` | Check if statute is in force in the ingested corpus |
+
+### Citation Tools (2)
+
+| Tool | Description |
+|------|-------------|
+| `law_parse_citation` | Parse `§ 823 Abs. 1 BGB` or `Art. 1 Abs. 1 GG` into structured components |
+| `law_validate_citation` | Check if a citation exists in the database |
+
+### EU Law Integration Tools (5)
+
+| Tool | Description |
+|------|-------------|
+| `law_get_eu_basis` | Get EU directives/regulations for a German statute |
+| `law_get_national_implementations` | Find German laws implementing an EU act |
+| `law_search_eu_implementations` | Search EU documents with German implementation counts |
+| `law_get_provision_eu_basis` | Get EU law references for specific provision |
+| `law_validate_eu_compliance` | Check implementation status |
+
+### Discovery & Metadata Tools (4)
+
+| Tool | Description |
+|------|-------------|
+| `law_list_countries` | List available country adapters and capabilities |
+| `law_describe_country` | Detailed country capability information |
+| `law_list_sources` | Data provenance and source metadata |
+| `law_about` | Server version, tier, statistics, and freshness |
+
+> **Note:** Most tools require a `country` parameter. Use `"de"` for Germany.
+
+---
+
+## Data Sources & Freshness
+
+All content is sourced from authoritative German legal databases:
+
+- **[gesetze-im-internet.de](https://www.gesetze-im-internet.de/)** -- Federal Ministry of Justice, all consolidated federal statutes
+- **[rechtsprechung-im-internet.de](https://www.rechtsprechung-im-internet.de/)** -- Federal court decisions (BVerfG, BGH, BVerwG, BAG, BSG, BFH, BPatG)
+- **[DIP Bundestag](https://dip.bundestag.de/)** -- Legislative preparatory works (Drucksachen, Plenarprotokolle)
+- **[EUR-Lex](https://eur-lex.europa.eu/)** -- EU cross-reference metadata
+
+### Automated Freshness Checks (Daily)
+
+A [daily GitHub Actions workflow](.github/workflows/check-updates.yml) monitors all data sources:
+
+| Source | Check | Method |
+|--------|-------|--------|
+| **Statute amendments** | gesetze-im-internet.de XML index | All 6,870 statutes checked |
+| **New statutes** | New entries in federal gazette | Diffed against database |
+| **Case law** | rechtsprechung-im-internet.de feed | Compared to database |
+| **Preparatory works** | DIP API query (30-day window) | New records detected |
+
+---
+
+## Security
+
+This project uses multiple layers of automated security scanning:
+
+| Scanner | What It Does | Schedule |
+|---------|-------------|----------|
+| **CodeQL** | Static analysis for security vulnerabilities | Weekly + PRs |
+| **Semgrep** | SAST scanning (OWASP top 10, secrets, TypeScript) | Every push |
+| **Gitleaks** | Secret detection across git history | Every push |
+| **Trivy** | CVE scanning on filesystem and npm dependencies | Daily |
+| **Docker Security** | Container image scanning + SBOM generation | Daily |
+| **Socket.dev** | Supply chain attack detection | PRs |
+| **OSSF Scorecard** | OpenSSF best practices scoring | Weekly |
+
+See [SECURITY.md](SECURITY.md) for the full policy and vulnerability reporting.
+
+---
 
 ## Important Disclaimers
 
@@ -184,13 +270,66 @@ This repository uses [GitHub Actions](.github/workflows/) for automated quality 
 >
 > Statute text is sourced from official gesetze-im-internet.de publications. However:
 > - This is a **research tool**, not a substitute for professional legal counsel
-> - **Court case coverage is limited** -- do not rely solely on this for case law research
+> - **Court case coverage is limited** (5,000 decisions) -- do not rely solely on this for case law research
 > - **Verify critical citations** against primary sources for court filings
 > - **EU cross-references** are extracted from German statute text, not EUR-Lex full text
 
+**Before using professionally, read:** [DISCLAIMER.md](DISCLAIMER.md) | [PRIVACY.md](PRIVACY.md)
+
 ### Client Confidentiality
 
-Queries go through the Claude API. For privileged or confidential matters, use on-premise deployment. Lawyers should consider Bundesrechtsanwaltskammer (German Federal Bar Association) confidentiality obligations when using cloud-based AI tools.
+Queries go through the Claude API. For privileged or confidential matters, use on-premise deployment. Lawyers should consider Bundesrechtsanwaltskammer (BRAK) confidentiality obligations when using cloud-based AI tools. See [PRIVACY.md](PRIVACY.md) for compliance guidance.
+
+---
+
+## Documentation
+
+- **[Architecture](docs/ARCHITECTURE.md)** -- Multi-country adapter architecture
+- **[Accuracy Plan](docs/ACCURACY_PLAN.md)** -- Roadmap to production accuracy
+- **[Auto Update](docs/AUTO_UPDATE.md)** -- Automated data freshness system
+- **[Security Policy](SECURITY.md)** -- Vulnerability reporting and scanning details
+- **[Disclaimer](DISCLAIMER.md)** -- Legal disclaimers and professional use notices
+- **[Privacy](PRIVACY.md)** -- Client confidentiality and data handling
+
+---
+
+## Development
+
+### Setup
+
+```bash
+git clone https://github.com/Ansvar-Systems/German-law-mcp
+cd German-law-mcp
+npm install
+npm run build
+npm test
+```
+
+### Running Locally
+
+```bash
+npm run dev                                       # Start MCP server
+npx @anthropic/mcp-inspector node dist/src/index.js   # Test with MCP Inspector
+```
+
+### Data Management
+
+```bash
+npm run ingest                    # Ingest statutes from gesetze-im-internet.de
+npm run ingest:cases              # Ingest case law from rechtsprechung-im-internet.de
+npm run ingest:prep               # Ingest preparatory works from DIP Bundestag
+npm run auto-update               # Run full update cycle
+npm run auto-update:dry-run       # Preview what would be updated
+npm run drift:detect              # Detect schema/data drift
+```
+
+### Performance
+
+- **Search Speed:** <100ms for most FTS5 queries
+- **Database Size:** ~300 MB (runtime download, Strategy B)
+- **Ingestion Coverage:** 6,870/6,870 statutes (100% TOC coverage)
+
+---
 
 ## Related Projects: Complete Compliance Suite
 
@@ -200,28 +339,49 @@ This server is part of **Ansvar's Compliance Suite** -- MCP servers that work to
 **Query 49 EU regulations directly from Claude** -- GDPR, AI Act, DORA, NIS2, MiFID II, eIDAS, and more. Full regulatory text with article-level search. `npx @ansvar/eu-regulations-mcp`
 
 ### @ansvar/german-law-mcp (This Project)
-**Query 6,870 German statutes directly from Claude** -- BGB, StGB, GG, and more. Full provision text with EU cross-references. `npx @ansvar/german-law-mcp`
+**Query 6,870 German statutes directly from Claude** -- BGB, StGB, GG, BDSG, and more. Full provision text with EU cross-references. `npx @ansvar/german-law-mcp`
 
 ### [@ansvar/dutch-law-mcp](https://github.com/Ansvar-Systems/Dutch-law-mcp)
 **Query 3,248 Dutch statutes directly from Claude** -- BW, Sr, Awb, and more. Full provision text with EU cross-references. `npx @ansvar/dutch-law-mcp`
 
-### [@ansvar/swedish-law-mcp](https://github.com/Ansvar-Systems/swedish-law-mcp)
+### [@ansvar/swedish-law-mcp](https://github.com/Ansvar-Systems/Swedish-law-mcp)
 **Query 717 Swedish statutes directly from Claude** -- DSL, BrB, ABL, MB, and more. Full provision text with EU cross-references. `npx @ansvar/swedish-law-mcp`
 
-### [@ansvar/slovenian-law-mcp](https://github.com/Ansvar-Systems/Slovenian-law-mcp)
-**Query Slovenian statutes directly from Claude** -- ZVOP-2, KZ-1, ZGD-1, and more. Full provision text with EU cross-references. `npx @ansvar/slovenian-law-mcp`
-
 ### [@ansvar/us-regulations-mcp](https://github.com/Ansvar-Systems/US_Compliance_MCP)
-**Query US federal and state compliance laws** -- HIPAA, CCPA, SOX, GLBA, FERPA, and more. `npm install @ansvar/us-regulations-mcp`
-
-### [@ansvar/ot-security-mcp](https://github.com/Ansvar-Systems/ot-security-mcp)
-**Query IEC 62443, NIST 800-82/53, and MITRE ATT&CK for ICS** -- Specialized for OT/ICS environments. `npx @ansvar/ot-security-mcp`
+**Query US federal and state compliance laws** -- HIPAA, CCPA, SOX, GLBA, FERPA, and more. `npx @ansvar/us-regulations-mcp`
 
 ### [@ansvar/automotive-cybersecurity-mcp](https://github.com/Ansvar-Systems/Automotive-MCP)
 **Query UNECE R155/R156 and ISO 21434** -- Automotive cybersecurity compliance. `npx @ansvar/automotive-cybersecurity-mcp`
 
-### [@ansvar/sanctions-mcp](https://github.com/Ansvar-Systems/Sanctions-MCP)
-**Offline-capable sanctions screening** -- OFAC, EU, UN sanctions lists. `pip install ansvar-sanctions-mcp`
+---
+
+## Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+Priority areas:
+- Lower court decisions (Landesgerichte, Oberlandesgerichte)
+- Historical statute versions and amendment tracking (Fassungsvergleich)
+- Expanded case law coverage (currently 5,000 of ~50,000+ published decisions)
+- State law (Landesrecht) for major Bundesländer
+
+---
+
+## Roadmap
+
+- [x] **Full statute coverage** -- 6,870 federal statutes, 91,843 provisions
+- [x] **Case law** -- 5,000 federal court decisions
+- [x] **Preparatory works** -- 89,423 DIP records (WP 19 + 20)
+- [x] **EU cross-references** -- Extracted from statute text
+- [x] **Citation parsing** -- `§ 823 Abs. 1 BGB` and `Art. 1 Abs. 1 GG` formats
+- [x] **Free/Professional tier gating** -- Honest messaging for tier limitations
+- [ ] Expanded case law (full archive, ~50,000+ decisions)
+- [ ] Lower court coverage (Landesgerichte)
+- [ ] Historical statute versions (Fassungsvergleich)
+- [ ] State law (Landesrecht)
+- [ ] English translations for key statutes
+
+---
 
 ## Citation
 
@@ -237,11 +397,11 @@ If you use this MCP server in academic research:
 }
 ```
 
-## Legal
+---
 
-- License: Apache-2.0
-- Security policy: see `SECURITY.md`
-- Contribution guidelines: see `CONTRIBUTING.md`
+## License
+
+Apache License 2.0. See [LICENSE](./LICENSE) for details.
 
 ### Data Licenses
 
@@ -250,14 +410,18 @@ If you use this MCP server in academic research:
 - **Preparatory Works:** DIP Bundestag (public domain)
 - **EU Metadata:** EUR-Lex (EU public domain)
 
+---
+
 ## About Ansvar Systems
 
-We build AI-accelerated compliance and legal research tools for the European market. This MCP server is part of our growing suite of jurisdiction-specific legal research tools.
+We build AI-accelerated compliance and legal research tools for the European market. This MCP server started as our internal reference tool for German law -- turns out everyone building for the DACH market has the same research frustrations.
+
+So we're open-sourcing it. Navigating 6,870 statutes shouldn't require a law degree.
 
 **[ansvar.eu](https://ansvar.eu)** -- Stockholm, Sweden
 
-## Architecture and adapter rollout
+---
 
-- `docs/ARCHITECTURE.md`
-- `docs/COUNTRY_CHECKLIST.md`
-- `docs/AUTO_UPDATE.md`
+<p align="center">
+  <sub>Built with care in Stockholm, Sweden</sub>
+</p>
