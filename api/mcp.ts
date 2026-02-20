@@ -6,11 +6,15 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { existsSync, createWriteStream, rmSync, renameSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { pipeline } from 'stream/promises';
 import { createGunzip } from 'zlib';
 import https from 'https';
 import type { IncomingMessage } from 'http';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Import the shell and adapters from the built output.
 import { LawMcpShell } from '../src/shell/shell.js';
