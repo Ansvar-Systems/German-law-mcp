@@ -19,7 +19,10 @@ export type ToolName =
   | "law_validate_citation"
   | "law_list_sources"
   | "law_about"
-  | "law_run_ingestion";
+  | "law_run_ingestion"
+  | "law_get_provision_history"
+  | "law_diff_provision"
+  | "law_get_recent_changes";
 
 export interface CountryDescriptor {
   code: CountryCode;
@@ -203,6 +206,45 @@ export interface IngestionResult {
   skippedCount: number;
 }
 
+// ---------------------------------------------------------------------------
+// Premium: Version tracking types
+// ---------------------------------------------------------------------------
+
+export interface ProvisionVersion {
+  effective_date: string | null;
+  superseded_date: string | null;
+  change_summary: string | null;
+  source_url: string | null;
+  body_text?: string;
+}
+
+export interface ProvisionHistory {
+  provision: string;
+  current_version: string | null;
+  versions: ProvisionVersion[];
+}
+
+export interface ProvisionDiff {
+  provision: string;
+  from_date: string;
+  to_date: string;
+  diff: string | null;
+  change_summary: string | null;
+}
+
+export interface RecentChange {
+  provision: string;
+  effective_date: string;
+  change_summary: string | null;
+  source_url: string | null;
+}
+
+export interface RecentChangesResponse {
+  since: string;
+  changes: RecentChange[];
+  total: number;
+}
+
 export interface CountryAdapter {
   country: CountryDescriptor;
   capabilities: {
@@ -215,6 +257,7 @@ export interface CountryAdapter {
     legalStance: boolean;
     eu: boolean;
     ingestion: boolean;
+    versionTracking: boolean;
   };
   /**
    * Optional runtime capability detection. Returns the set of DB-level
@@ -244,6 +287,10 @@ export interface CountryAdapter {
   parseCitation?(citation: string): Promise<CitationParseResult | null>;
   validateCitation?(citation: string): Promise<CitationValidationResult>;
   runIngestion?(request: IngestionRequest): Promise<IngestionResult>;
+  // Premium: version tracking
+  getProvisionHistory?(lawIdentifier: string, article: string): Promise<ProvisionHistory | null>;
+  diffProvision?(lawIdentifier: string, article: string, fromDate: string, toDate?: string): Promise<ProvisionDiff | null>;
+  getRecentChanges?(since: string, limit?: number): Promise<RecentChangesResponse>;
 }
 
 export interface ToolCall {

@@ -39,6 +39,7 @@ export const norwayAdapter: CountryAdapter = {
     legalStance: false,
     eu: false,
     ingestion: true,
+    versionTracking: false,
   },
   async searchDocuments(request) {
     return searchDocumentsInMemory(NORWEGIAN_LEGISLATION, request);
