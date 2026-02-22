@@ -1,6 +1,6 @@
 {
   "name": "@ansvar/german-law-mcp",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "mcpName": "eu.ansvar/german-law-mcp",
   "description": "German legal research MCP server with statutes, case law, and preparatory works from gesetze-im-internet.de",
   "type": "module",
@@ -63,7 +63,8 @@
     "test:contract": "npm run build && node --test dist/__tests__/contract/*.test.js",
     "drift:detect": "tsx scripts/drift-detect.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "validate": "npm run typecheck && npm test && npm run test:contract"
+    "validate": "npm run typecheck && npm test && npm run test:contract",
+    "lint": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",
