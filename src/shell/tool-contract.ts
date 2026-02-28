@@ -560,4 +560,95 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       },
     },
   },
+  // -------------------------------------------------------------------------
+  // Premium: version tracking tools
+  // -------------------------------------------------------------------------
+  {
+    name: "law_get_provision_history",
+    description:
+      "Get the full version timeline for a specific provision or article, showing all amendments with dates and change summaries. " +
+      "Premium feature — requires Ansvar Intelligence Portal.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["country", "law_identifier", "article"],
+      properties: {
+        country: {
+          type: "string",
+          description: "Country code. Use 'de' for Germany.",
+        },
+        law_identifier: {
+          type: "string",
+          description:
+            "Law or regulation identifier, e.g. 'BGB', 'StGB', 'GG', 'BDSG'.",
+        },
+        article: {
+          type: "string",
+          description:
+            "Article or section reference, e.g. '§ 823', 'Art. 1', '§ 1'.",
+        },
+      },
+    },
+  },
+  {
+    name: "law_diff_provision",
+    description:
+      "Show what changed in a provision between two dates, including a unified diff and change summary. " +
+      "Premium feature — requires Ansvar Intelligence Portal.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["country", "law_identifier", "article", "from_date"],
+      properties: {
+        country: {
+          type: "string",
+          description: "Country code. Use 'de' for Germany.",
+        },
+        law_identifier: {
+          type: "string",
+          description: "Law or regulation identifier, e.g. 'BGB', 'StGB'.",
+        },
+        article: {
+          type: "string",
+          description: "Article or section reference, e.g. '§ 823', 'Art. 1'.",
+        },
+        from_date: {
+          type: "string",
+          description: "ISO date to diff from, e.g. '2024-01-01'.",
+        },
+        to_date: {
+          type: "string",
+          description:
+            "ISO date to diff to (defaults to current). E.g. '2025-12-31'.",
+        },
+      },
+    },
+  },
+  {
+    name: "law_get_recent_changes",
+    description:
+      "List all provisions that changed since a given date, with change summaries. " +
+      "Premium feature — requires Ansvar Intelligence Portal.",
+    inputSchema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["country", "since"],
+      properties: {
+        country: {
+          type: "string",
+          description: "Country code. Use 'de' for Germany.",
+        },
+        since: {
+          type: "string",
+          description: "ISO date, e.g. '2024-06-01'.",
+        },
+        limit: {
+          type: "number",
+          minimum: 1,
+          maximum: 200,
+          description: "Maximum changes to return. Default: 50, max: 200.",
+        },
+      },
+    },
+  },
 ];

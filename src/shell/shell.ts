@@ -2,6 +2,9 @@ import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { upgradeMessage } from "../capabilities.js";
+
+const PREMIUM_UPGRADE_MESSAGE =
+  "Version tracking is available in the Ansvar Intelligence Portal. Contact hello@ansvar.ai for access.";
 import {
   getGermanLawDocumentCount,
   getGermanCaseLawDocumentCount,
@@ -66,6 +69,9 @@ export class LawMcpShell {
       "law_list_sources": this.listSources.bind(this),
       "law_about": this.about.bind(this),
       "law_run_ingestion": this.runIngestion.bind(this),
+      "law_get_provision_history": this.getProvisionHistory.bind(this),
+      "law_diff_provision": this.diffProvision.bind(this),
+      "law_get_recent_changes": this.getRecentChanges.bind(this),
     };
   }
 
@@ -461,6 +467,60 @@ export class LawMcpShell {
     return adapter.runIngestion!(request);
   }
 
+  // ---------------------------------------------------------------------------
+  // Premium: version tracking handlers
+  // ---------------------------------------------------------------------------
+
+  private async getProvisionHistory(args: Record<string, unknown>): Promise<unknown> {
+    if (!process.env.PREMIUM_ENABLED) {
+      return { premium: false, message: PREMIUM_UPGRADE_MESSAGE };
+    }
+    const adapter = this.requireVersionTrackingAdapter(args);
+    const lawIdentifier = requireString(args, "law_identifier");
+    const article = requireString(args, "article");
+    return adapter.getProvisionHistory!(lawIdentifier, article);
+  }
+
+  private async diffProvision(args: Record<string, unknown>): Promise<unknown> {
+    if (!process.env.PREMIUM_ENABLED) {
+      return { premium: false, message: PREMIUM_UPGRADE_MESSAGE };
+    }
+    const adapter = this.requireVersionTrackingAdapter(args);
+    const lawIdentifier = requireString(args, "law_identifier");
+    const article = requireString(args, "article");
+    const fromDate = requireString(args, "from_date");
+    const toDate = optionalString(args, "to_date");
+    return adapter.diffProvision!(lawIdentifier, article, fromDate, toDate);
+  }
+
+  private async getRecentChanges(args: Record<string, unknown>): Promise<unknown> {
+    if (!process.env.PREMIUM_ENABLED) {
+      return { premium: false, message: PREMIUM_UPGRADE_MESSAGE };
+    }
+    const adapter = this.requireVersionTrackingAdapter(args);
+    const since = requireString(args, "since");
+    const limit = optionalNumber(args, "limit");
+    return adapter.getRecentChanges!(since, limit);
+  }
+
+  private requireVersionTrackingAdapter(args: Record<string, unknown>): CountryAdapter {
+    const adapter = this.requireCountry(args);
+
+    if (
+      !adapter.capabilities.versionTracking ||
+      !adapter.getProvisionHistory ||
+      !adapter.diffProvision ||
+      !adapter.getRecentChanges
+    ) {
+      throw new ShellError(
+        "unsupported_capability",
+        `Country ${adapter.country.code} does not support version tracking`,
+      );
+    }
+
+    return adapter;
+  }
+
   private requireDocumentsAdapter(args: Record<string, unknown>): CountryAdapter {
     const adapter = this.requireCountry(args);
 
@@ -636,6 +696,15 @@ export class LawMcpShell {
       "law_about": true,
       "law_run_ingestion":
         adapter.capabilities.ingestion && Boolean(adapter.runIngestion),
+      "law_get_provision_history":
+        adapter.capabilities.versionTracking &&
+        Boolean(adapter.getProvisionHistory),
+      "law_diff_provision":
+        adapter.capabilities.versionTracking &&
+        Boolean(adapter.diffProvision),
+      "law_get_recent_changes":
+        adapter.capabilities.versionTracking &&
+        Boolean(adapter.getRecentChanges),
     };
   }
 }

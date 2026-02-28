@@ -76,6 +76,7 @@ export const germanyAdapter: CountryAdapter = {
     legalStance: true,
     eu: true,
     ingestion: true,
+    versionTracking: false,
   },
   async searchDocuments(request) {
     const dbSearch = searchGermanLawDocuments(request.query, request.limit ?? 20);

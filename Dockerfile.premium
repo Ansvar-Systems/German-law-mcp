@@ -1,0 +1,49 @@
+# German Law MCP — Premium Tier
+# Adds version tracking tools (get_provision_history, diff_provision, get_recent_changes)
+# Includes provision_versions data baked in
+#
+# Build: docker build -f Dockerfile.premium -t ghcr.io/ansvar-systems/german-law-mcp-premium:latest .
+# Run:   docker run -p 3000:3000 ghcr.io/ansvar-systems/german-law-mcp-premium:latest
+
+# --- Stage 1: Build TypeScript ---
+FROM node:20-slim AS builder
+
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci --ignore-scripts
+COPY tsconfig.json ./
+COPY src/ src/
+RUN npm run build
+
+# --- Stage 2: Production ---
+FROM node:20-slim AS production
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+ENV NODE_ENV=production
+ENV GERMAN_LAW_DB_PATH=/app/data/database.db
+ENV PREMIUM_ENABLED=true
+ENV PORT=3000
+
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+
+COPY --from=builder /app/dist/ dist/
+
+# Copy pre-built database (must exist at build time)
+COPY data/database.db data/database.db
+
+# Non-root user for security
+RUN addgroup --system --gid 1001 mcp && \
+    adduser --system --uid 1001 --ingroup mcp mcp && \
+    chown -R mcp:mcp /app
+USER mcp
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+# Start HTTP server (premium uses HTTP transport for Docker)
+CMD ["node", "dist/src/http-server.js"]
