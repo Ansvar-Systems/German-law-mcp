@@ -39,8 +39,8 @@ RUN addgroup --system --gid 1001 mcp && \
     chown -R mcp:mcp /app
 USER mcp
 
-# Health check: verify database is readable
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD node -e "const D=require('@ansvar/mcp-sqlite');const d=new D(process.env.GERMAN_LAW_DB_PATH||'/app/data/database.db',{readonly:true});d.prepare('SELECT 1').get();d.close();console.log('ok')"
+# Health check: verify HTTP server responds
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"
 
-ENTRYPOINT ["node", "dist/src/index.js"]
+CMD ["node", "dist/src/http-server.js"]
