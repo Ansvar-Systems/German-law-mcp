@@ -89,10 +89,29 @@ function createMcpServer(): { server: Server; shell: LawMcpShell } {
 }
 
 async function main() {
-  const { server: mcpServer } = createMcpServer();
-  const transports = new Map<string, StreamableHTTPServerTransport>();
+  const sessions = new Map<
+    string,
+    { transport: StreamableHTTPServerTransport; server: Server }
+  >();
 
-  const httpServer = createServer(async (req, res) => {
+  const httpServer = createServer((req, res) => {
+    handleRequest(req, res, sessions).catch((err) => {
+      console.error(`[${SERVER_NAME}] Unhandled error:`, err);
+      if (!res.headersSent) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Internal server error" }));
+      }
+    });
+  });
+
+  async function handleRequest(
+    req: import("node:http").IncomingMessage,
+    res: import("node:http").ServerResponse,
+    sessions: Map<
+      string,
+      { transport: StreamableHTTPServerTransport; server: Server }
+    >,
+  ) {
     const url = new URL(req.url || "/", `http://localhost:${PORT}`);
 
     if (url.pathname === "/health") {
@@ -103,34 +122,39 @@ async function main() {
 
     if (url.pathname === "/mcp") {
       const sessionId = req.headers["mcp-session-id"] as string | undefined;
-      let transport: StreamableHTTPServerTransport;
 
-      if (sessionId && transports.has(sessionId)) {
-        transport = transports.get(sessionId)!;
-      } else {
-        transport = new StreamableHTTPServerTransport({
-          sessionIdGenerator: () => randomUUID(),
-        });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SDK type mismatch with exactOptionalPropertyTypes
-        await mcpServer.connect(transport as any);
-        transport.onclose = () => {
-          if (transport.sessionId) {
-            transports.delete(transport.sessionId);
-          }
-        };
+      if (sessionId && sessions.has(sessionId)) {
+        const session = sessions.get(sessionId)!;
+        await session.transport.handleRequest(req, res);
+        return;
       }
+
+      // New session — create a fresh MCP server instance per session
+      const { server: mcpServer } = createMcpServer();
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => randomUUID(),
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SDK type mismatch with exactOptionalPropertyTypes
+      await mcpServer.connect(transport as any);
+      transport.onclose = () => {
+        if (transport.sessionId) {
+          sessions.delete(transport.sessionId);
+        }
+        mcpServer.close().catch(() => {});
+      };
 
       await transport.handleRequest(req, res);
 
-      if (transport.sessionId && !transports.has(transport.sessionId)) {
-        transports.set(transport.sessionId, transport);
+      // Store AFTER handleRequest — sessionId is set during initialize
+      if (transport.sessionId) {
+        sessions.set(transport.sessionId, { transport, server: mcpServer });
       }
       return;
     }
 
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not found" }));
-  });
+  }
 
   httpServer.listen(PORT, () => {
     console.error(
