@@ -2,56 +2,20 @@ import type { ToolDefinition } from "./types.js";
 
 export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
-    name: "law_list_countries",
-    description:
-      "List all available country adapters and their capabilities. " +
-      "Use this first to discover which countries are available and what data each country provides " +
-      "(statutes, case law, preparatory works, EU cross-references, citation parsing). " +
-      "Returns an array of objects with country code and capability flags.",
-    inputSchema: {
-      type: "object",
-      additionalProperties: false,
-      properties: {},
-    },
-  },
-  {
-    name: "law_describe_country",
-    description:
-      "Get detailed information about a specific country's capabilities and supported tools. " +
-      "Returns the country descriptor (code, name, language) and a map of which tools are available. " +
-      "Use this to check what a country supports before calling country-specific tools.",
-    inputSchema: {
-      type: "object",
-      additionalProperties: false,
-      required: ["country"],
-      properties: {
-        country: {
-          type: "string",
-          description:
-            "ISO 3166-1 alpha-2 country code, lowercase. Example: 'de' for Germany.",
-        },
-      },
-    },
-  },
-  {
-    name: "law_search_documents",
+    name: "search_legislation",
     description:
       "Full-text search across German federal statutes and regulations. " +
       "Accepts natural language queries or German legal citations. " +
       "The search uses a three-tier strategy: (1) exact citation match, (2) FTS5 BM25-ranked full-text search, (3) LIKE fallback. " +
       "Supports German legal terms (e.g. 'Datenschutz', 'Grundrechte') and citation patterns (e.g. '§ 823 BGB', 'Art. 1 GG'). " +
       "Returns documents with id, title, citation, source URL, effective date, and text snippet. " +
-      "Use law_get_document to retrieve the full text of a specific result. " +
+      "Use get_provision to retrieve the full text of a specific result. " +
       "Default limit: 20. Max: 100.",
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country", "query"],
+      required: ["query"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         query: {
           type: "string",
           description:
@@ -69,7 +33,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_search_case_law",
+    name: "search_case_law",
     description:
       "Search German federal court decisions (Rechtsprechung). " +
       "Covers decisions from: BVerfG (Constitutional Court), BGH (Federal Court of Justice), " +
@@ -83,12 +47,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country", "query"],
+      required: ["query"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         query: {
           type: "string",
           description:
@@ -119,7 +79,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_get_preparatory_works",
+    name: "get_preparatory_works",
     description:
       "Retrieve legislative preparatory works (Gesetzesmaterialien) from the DIP Bundestag documentation system. " +
       "Includes Drucksachen (printed papers) and Plenarprotokolle (plenary protocols) for Wahlperioden 19 and 20. " +
@@ -131,12 +91,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         citation: {
           type: "string",
           description:
@@ -162,7 +117,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_format_citation",
+    name: "format_citation",
     description:
       "Normalize and format a German legal citation into a standard form. " +
       "Supports three styles: 'default' (full form), 'short' (abbreviated), and 'pinpoint' (section-only). " +
@@ -172,12 +127,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country", "citation"],
+      required: ["citation"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         citation: {
           type: "string",
           description:
@@ -193,7 +144,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_check_currency",
+    name: "check_currency",
     description:
       "Check whether a German statute or provision appears current (in force) in the ingested corpus. " +
       "Provide either a citation (e.g. '§ 1 BGB') or a statute ID. " +
@@ -203,12 +154,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         citation: {
           type: "string",
           description: "German legal citation. Example: '§ 1 BGB', 'Art. 20 GG'.",
@@ -226,7 +172,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_build_legal_stance",
+    name: "build_legal_stance",
     description:
       "Build a comprehensive legal research bundle for a topic. " +
       "Aggregates results from statutes, case law, and preparatory works into a single structured response. " +
@@ -237,12 +183,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country", "query"],
+      required: ["query"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         query: {
           type: "string",
           description:
@@ -267,7 +209,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_get_eu_basis",
+    name: "get_eu_basis",
     description:
       "Get EU directives and regulations referenced by a German statute. " +
       "Looks up EU legal basis (CELEX numbers, directive/regulation references) linked to a German law. " +
@@ -277,12 +219,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         citation: {
           type: "string",
           description: "German citation. Example: '§ 1 BDSG'.",
@@ -311,21 +248,17 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_search_eu_implementations",
+    name: "search_eu_implementations",
     description:
       "Search for EU acts (directives and regulations) and their German implementation mapping. " +
-      "Use this to find which EU law corresponds to a topic, then use law_get_national_implementations " +
+      "Use this to find which EU law corresponds to a topic, then use get_german_implementations " +
       "to see which German statutes implement it. " +
       "Requires professional tier.",
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country", "query"],
+      required: ["query"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         query: {
           type: "string",
           description:
@@ -342,20 +275,16 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_get_national_implementations",
+    name: "get_german_implementations",
     description:
       "Get all German statutes that implement a specific EU act (directive or regulation). " +
-      "Provide the EU act identifier (e.g. a CELEX number or short identifier from law_search_eu_implementations). " +
+      "Provide the EU act identifier (e.g. a CELEX number or short identifier from search_eu_implementations). " +
       "Requires professional tier.",
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country", "euId"],
+      required: ["euId"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         euId: {
           type: "string",
           description:
@@ -372,7 +301,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_get_provision_eu_basis",
+    name: "get_provision_eu_basis",
     description:
       "Get EU references linked to a specific provision or document by its document ID. " +
       "Use a document ID obtained from a previous search result. " +
@@ -380,12 +309,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country", "documentId"],
+      required: ["documentId"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         documentId: {
           type: "string",
           description: "Document ID from a previous search result.",
@@ -401,7 +326,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_validate_eu_compliance",
+    name: "validate_eu_compliance",
     description:
       "Validate whether a specific EU act has mapped German national implementations in the corpus. " +
       "Returns compliance status indicating whether the EU act is implemented by German statutes. " +
@@ -409,12 +334,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country", "euId"],
+      required: ["euId"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         euId: {
           type: "string",
           description: "EU act identifier to validate.",
@@ -431,22 +352,18 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_get_document",
+    name: "get_provision",
     description:
       "Retrieve a single document by its ID. " +
       "Use this to get the full text/details of a specific statute, case, or preparatory work " +
-      "found via law_search_documents, law_search_case_law, or law_get_preparatory_works. " +
+      "found via search_legislation, search_case_law, or get_preparatory_works. " +
       "The ID is returned in the 'id' field of search results. " +
       "Searches across all document tables (statutes, case law, preparatory works).",
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country", "id"],
+      required: ["id"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         id: {
           type: "string",
           description:
@@ -456,7 +373,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_parse_citation",
+    name: "parse_citation",
     description:
       "Parse and normalize a German legal citation string into structured components. " +
       "Returns the parsed components (code, paragraph/article number, subsection, sentence) " +
@@ -466,12 +383,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country", "citation"],
+      required: ["citation"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         citation: {
           type: "string",
           description:
@@ -481,7 +394,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_validate_citation",
+    name: "validate_citation",
     description:
       "Validate a German legal citation against the ingested corpus. " +
       "Returns whether the citation exists in the database, along with any matching documents. " +
@@ -490,12 +403,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country", "citation"],
+      required: ["citation"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         citation: {
           type: "string",
           description:
@@ -505,7 +414,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_list_sources",
+    name: "list_sources",
     description:
       "List all data sources used by this server, with provenance metadata. " +
       "Returns information about each source: name, URL, last ingestion date, scope, and limitations. " +
@@ -513,17 +422,11 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country"],
-      properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
-      },
+      properties: {},
     },
   },
   {
-    name: "law_about",
+    name: "about",
     description:
       "Get server metadata: version, database tier, capabilities, data statistics, and source information. " +
       "Use this to understand what this server provides and its current state. " +
@@ -534,49 +437,19 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       properties: {},
     },
   },
-  {
-    name: "law_run_ingestion",
-    description:
-      "Trigger data ingestion or update workflow for a country's data source. " +
-      "Primarily used for maintenance. Set dryRun: true to preview what would be updated without making changes. " +
-      "Not available in production Vercel deployment.",
-    inputSchema: {
-      type: "object",
-      additionalProperties: false,
-      required: ["country"],
-      properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
-        sourceId: {
-          type: "string",
-          description: "Specific source to ingest. Omit to update all sources.",
-        },
-        dryRun: {
-          type: "boolean",
-          description: "Preview mode: show what would be updated without making changes. Default: false.",
-        },
-      },
-    },
-  },
   // -------------------------------------------------------------------------
   // Premium: version tracking tools
   // -------------------------------------------------------------------------
   {
-    name: "law_get_provision_history",
+    name: "get_provision_history",
     description:
       "Get the full version timeline for a specific provision or article, showing all amendments with dates and change summaries. " +
       "Premium feature — requires Ansvar Intelligence Portal.",
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country", "law_identifier", "article"],
+      required: ["law_identifier", "article"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         law_identifier: {
           type: "string",
           description:
@@ -591,19 +464,15 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_diff_provision",
+    name: "diff_provision",
     description:
       "Show what changed in a provision between two dates, including a unified diff and change summary. " +
       "Premium feature — requires Ansvar Intelligence Portal.",
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country", "law_identifier", "article", "from_date"],
+      required: ["law_identifier", "article", "from_date"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         law_identifier: {
           type: "string",
           description: "Law or regulation identifier, e.g. 'BGB', 'StGB'.",
@@ -625,19 +494,15 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
-    name: "law_get_recent_changes",
+    name: "get_recent_changes",
     description:
       "List all provisions that changed since a given date, with change summaries. " +
       "Premium feature — requires Ansvar Intelligence Portal.",
     inputSchema: {
       type: "object",
       additionalProperties: false,
-      required: ["country", "since"],
+      required: ["since"],
       properties: {
-        country: {
-          type: "string",
-          description: "Country code. Use 'de' for Germany.",
-        },
         since: {
           type: "string",
           description: "ISO date, e.g. '2024-06-01'.",
