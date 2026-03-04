@@ -165,10 +165,10 @@ gesetze-im-internet.de → Parse XML → SQLite → FTS5 snippet() → MCP respo
 |---------------------|-----------------|
 | Search gesetze-im-internet.de by law name | Search by plain German: *"Datenschutz Arbeitnehmer"* |
 | Navigate multi-section statutes manually | Get the exact provision with context |
-| Manual cross-referencing between laws | `law_build_legal_stance` aggregates across sources |
-| "Is this statute still in force?" → check manually | `law_check_currency` → answer in seconds |
-| Find EU basis → dig through EUR-Lex | `law_get_eu_basis` → linked EU directives instantly |
-| Check DIP Bundestag for legislative history | `law_get_preparatory_works` → structured results |
+| Manual cross-referencing between laws | `build_legal_stance` aggregates across sources |
+| "Is this statute still in force?" → check manually | `check_currency` → answer in seconds |
+| Find EU basis → dig through EUR-Lex | `get_eu_basis` → linked EU directives instantly |
+| Check DIP Bundestag for legislative history | `get_preparatory_works` → structured results |
 | No API, no integration | MCP protocol → AI-native |
 
 **Traditional:** Search gesetze-im-internet.de → Download XML → Ctrl+F → Cross-reference with Drucksache → Check EUR-Lex for EU basis → Repeat
@@ -183,42 +183,38 @@ gesetze-im-internet.de → Parse XML → SQLite → FTS5 snippet() → MCP respo
 
 | Tool | Description |
 |------|-------------|
-| `law_search_documents` | FTS5 search on 91,843 provisions with BM25 ranking |
-| `law_get_document` | Retrieve specific provision by document ID |
-| `law_search_case_law` | Search 5,000 federal court decisions with court/date filters |
-| `law_get_preparatory_works` | Get Drucksachen and Plenarprotokolle for a statute |
-| `law_validate_citation` | Validate citation against database (zero-hallucination check) |
-| `law_build_legal_stance` | Aggregate citations from statutes, case law, prep works |
-| `law_format_citation` | Format citations per German conventions (default/short/pinpoint) |
-| `law_check_currency` | Check if statute is in force in the ingested corpus |
+| `search_legislation` | FTS5 search on 91,843 provisions with BM25 ranking |
+| `get_provision` | Retrieve specific provision by document ID |
+| `search_case_law` | Search 5,000 federal court decisions with court/date filters |
+| `get_preparatory_works` | Get Drucksachen and Plenarprotokolle for a statute |
+| `validate_citation` | Validate citation against database (zero-hallucination check) |
+| `build_legal_stance` | Aggregate citations from statutes, case law, prep works |
+| `format_citation` | Format citations per German conventions (default/short/pinpoint) |
+| `check_currency` | Check if statute is in force in the ingested corpus |
 
 ### Citation Tools (2)
 
 | Tool | Description |
 |------|-------------|
-| `law_parse_citation` | Parse `§ 823 Abs. 1 BGB` or `Art. 1 Abs. 1 GG` into structured components |
-| `law_validate_citation` | Check if a citation exists in the database |
+| `parse_citation` | Parse `§ 823 Abs. 1 BGB` or `Art. 1 Abs. 1 GG` into structured components |
+| `validate_citation` | Check if a citation exists in the database |
 
 ### EU Law Integration Tools (5)
 
 | Tool | Description |
 |------|-------------|
-| `law_get_eu_basis` | Get EU directives/regulations for a German statute |
-| `law_get_national_implementations` | Find German laws implementing an EU act |
-| `law_search_eu_implementations` | Search EU documents with German implementation counts |
-| `law_get_provision_eu_basis` | Get EU law references for specific provision |
-| `law_validate_eu_compliance` | Check implementation status |
+| `get_eu_basis` | Get EU directives/regulations for a German statute |
+| `get_german_implementations` | Find German laws implementing an EU act |
+| `search_eu_implementations` | Search EU documents with German implementation counts |
+| `get_provision_eu_basis` | Get EU law references for specific provision |
+| `validate_eu_compliance` | Check implementation status |
 
-### Discovery & Metadata Tools (4)
+### Discovery & Metadata Tools (2)
 
 | Tool | Description |
 |------|-------------|
-| `law_list_countries` | List available country adapters and capabilities |
-| `law_describe_country` | Detailed country capability information |
-| `law_list_sources` | Data provenance and source metadata |
-| `law_about` | Server version, tier, statistics, and freshness |
-
-> **Note:** Most tools require a `country` parameter. Use `"de"` for Germany.
+| `list_sources` | Data provenance and source metadata |
+| `about` | Server version, tier, statistics, and freshness |
 
 ---
 

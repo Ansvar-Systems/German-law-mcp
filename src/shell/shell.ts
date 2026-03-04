@@ -33,7 +33,6 @@ import type {
   EuComplianceValidationRequest,
   EuImplementationSearchRequest,
   EuNationalImplementationsRequest,
-  IngestionRequest,
   LegalStanceRequest,
   PreparatoryWorksRequest,
   SearchRequest,
@@ -50,28 +49,25 @@ export class LawMcpShell {
 
   constructor(private readonly registry: AdapterRegistry) {
     this.handlers = {
-      "law_list_countries": this.listCountries.bind(this),
-      "law_describe_country": this.describeCountry.bind(this),
-      "law_search_documents": this.searchDocuments.bind(this),
-      "law_search_case_law": this.searchCaseLaw.bind(this),
-      "law_get_preparatory_works": this.getPreparatoryWorks.bind(this),
-      "law_format_citation": this.formatCitation.bind(this),
-      "law_check_currency": this.checkCurrency.bind(this),
-      "law_build_legal_stance": this.buildLegalStance.bind(this),
-      "law_get_eu_basis": this.getEuBasis.bind(this),
-      "law_search_eu_implementations": this.searchEuImplementations.bind(this),
-      "law_get_national_implementations": this.getNationalImplementations.bind(this),
-      "law_get_provision_eu_basis": this.getProvisionEuBasis.bind(this),
-      "law_validate_eu_compliance": this.validateEuCompliance.bind(this),
-      "law_get_document": this.getDocument.bind(this),
-      "law_parse_citation": this.parseCitation.bind(this),
-      "law_validate_citation": this.validateCitation.bind(this),
-      "law_list_sources": this.listSources.bind(this),
-      "law_about": this.about.bind(this),
-      "law_run_ingestion": this.runIngestion.bind(this),
-      "law_get_provision_history": this.getProvisionHistory.bind(this),
-      "law_diff_provision": this.diffProvision.bind(this),
-      "law_get_recent_changes": this.getRecentChanges.bind(this),
+      "search_legislation": this.searchDocuments.bind(this),
+      "search_case_law": this.searchCaseLaw.bind(this),
+      "get_preparatory_works": this.getPreparatoryWorks.bind(this),
+      "format_citation": this.formatCitation.bind(this),
+      "check_currency": this.checkCurrency.bind(this),
+      "build_legal_stance": this.buildLegalStance.bind(this),
+      "get_eu_basis": this.getEuBasis.bind(this),
+      "search_eu_implementations": this.searchEuImplementations.bind(this),
+      "get_german_implementations": this.getNationalImplementations.bind(this),
+      "get_provision_eu_basis": this.getProvisionEuBasis.bind(this),
+      "validate_eu_compliance": this.validateEuCompliance.bind(this),
+      "get_provision": this.getDocument.bind(this),
+      "parse_citation": this.parseCitation.bind(this),
+      "validate_citation": this.validateCitation.bind(this),
+      "list_sources": this.listSources.bind(this),
+      "about": this.about.bind(this),
+      "get_provision_history": this.getProvisionHistory.bind(this),
+      "diff_provision": this.diffProvision.bind(this),
+      "get_recent_changes": this.getRecentChanges.bind(this),
     };
   }
 
@@ -111,26 +107,8 @@ export class LawMcpShell {
     }
   }
 
-  private async listCountries(): Promise<unknown> {
-    return this.registry.list().map((adapter) => ({
-      country: adapter.country,
-      capabilities: adapter.capabilities,
-    }));
-  }
-
-  private async describeCountry(args: Record<string, unknown>): Promise<unknown> {
-    const countryCode = requireString(args, "country");
-    const adapter = this.registry.get(countryCode);
-
-    return {
-      country: adapter.country,
-      capabilities: adapter.capabilities,
-      tools: this.countryToolSupport(adapter),
-    };
-  }
-
   private async searchDocuments(args: Record<string, unknown>): Promise<unknown> {
-    const adapter = this.requireDocumentsAdapter(args);
+    const adapter = this.requireDocumentsAdapter();
     const query = requireString(args, "query");
     const limit = optionalNumber(args, "limit");
     const request: SearchRequest =
@@ -140,14 +118,14 @@ export class LawMcpShell {
   }
 
   private async getDocument(args: Record<string, unknown>): Promise<unknown> {
-    const adapter = this.requireDocumentsAdapter(args);
+    const adapter = this.requireDocumentsAdapter();
     const id = requireString(args, "id");
 
     return adapter.getDocument!(id);
   }
 
   private async searchCaseLaw(args: Record<string, unknown>): Promise<unknown> {
-    const adapter = this.requireCaseLawAdapter(args);
+    const adapter = this.requireCaseLawAdapter();
 
     const gateResult = requireDbCapability(adapter, "basic_case_law", "Case law search");
     if (gateResult !== null) {
@@ -173,7 +151,7 @@ export class LawMcpShell {
   private async getPreparatoryWorks(
     args: Record<string, unknown>,
   ): Promise<unknown> {
-    const adapter = this.requirePreparatoryWorksAdapter(args);
+    const adapter = this.requirePreparatoryWorksAdapter();
 
     const gateResult = requireDbCapability(adapter, "full_preparatory_works", "Preparatory works");
     if (gateResult !== null) {
@@ -203,14 +181,14 @@ export class LawMcpShell {
   }
 
   private async parseCitation(args: Record<string, unknown>): Promise<unknown> {
-    const adapter = this.requireCitationsAdapter(args);
+    const adapter = this.requireCitationsAdapter();
     const citation = requireString(args, "citation");
 
     return adapter.parseCitation!(citation);
   }
 
   private async formatCitation(args: Record<string, unknown>): Promise<unknown> {
-    const adapter = this.requireFormattingAdapter(args);
+    const adapter = this.requireFormattingAdapter();
     const citation = requireString(args, "citation");
     const styleValue = optionalString(args, "style");
     const style =
@@ -224,7 +202,7 @@ export class LawMcpShell {
   }
 
   private async checkCurrency(args: Record<string, unknown>): Promise<unknown> {
-    const adapter = this.requireCurrencyAdapter(args);
+    const adapter = this.requireCurrencyAdapter();
     const citation = optionalString(args, "citation");
     const statuteId = optionalString(args, "statuteId");
     const asOfDate = optionalString(args, "asOfDate");
@@ -246,7 +224,7 @@ export class LawMcpShell {
   }
 
   private async buildLegalStance(args: Record<string, unknown>): Promise<unknown> {
-    const adapter = this.requireLegalStanceAdapter(args);
+    const adapter = this.requireLegalStanceAdapter();
     const query = requireString(args, "query");
     const limit = optionalNumber(args, "limit");
     let includeCaseLaw = optionalBoolean(args, "includeCaseLaw");
@@ -284,7 +262,7 @@ export class LawMcpShell {
   }
 
   private async getEuBasis(args: Record<string, unknown>): Promise<unknown> {
-    const adapter = this.requireEuAdapter(args);
+    const adapter = this.requireEuAdapter();
     const citation = optionalString(args, "citation");
     const statuteId = optionalString(args, "statuteId");
     const documentId = optionalString(args, "documentId");
@@ -314,7 +292,7 @@ export class LawMcpShell {
   private async searchEuImplementations(
     args: Record<string, unknown>,
   ): Promise<unknown> {
-    const adapter = this.requireEuAdapter(args);
+    const adapter = this.requireEuAdapter();
     const query = requireString(args, "query");
     const limit = optionalNumber(args, "limit");
     const request: EuImplementationSearchRequest =
@@ -326,7 +304,7 @@ export class LawMcpShell {
   private async getNationalImplementations(
     args: Record<string, unknown>,
   ): Promise<unknown> {
-    const adapter = this.requireEuAdapter(args);
+    const adapter = this.requireEuAdapter();
     const euId = requireString(args, "euId");
     const limit = optionalNumber(args, "limit");
     const request: EuNationalImplementationsRequest =
@@ -338,7 +316,7 @@ export class LawMcpShell {
   private async getProvisionEuBasis(
     args: Record<string, unknown>,
   ): Promise<unknown> {
-    const adapter = this.requireEuAdapter(args);
+    const adapter = this.requireEuAdapter();
     const documentId = requireString(args, "documentId");
     const limit = optionalNumber(args, "limit");
 
@@ -350,7 +328,7 @@ export class LawMcpShell {
   private async validateEuCompliance(
     args: Record<string, unknown>,
   ): Promise<unknown> {
-    const adapter = this.requireEuAdapter(args);
+    const adapter = this.requireEuAdapter();
     const euId = requireString(args, "euId");
     const citation = optionalString(args, "citation");
     const statuteId = optionalString(args, "statuteId");
@@ -366,15 +344,14 @@ export class LawMcpShell {
   private async validateCitation(
     args: Record<string, unknown>,
   ): Promise<unknown> {
-    const adapter = this.requireCitationsAdapter(args);
+    const adapter = this.requireCitationsAdapter();
     const citation = requireString(args, "citation");
 
     return adapter.validateCitation!(citation);
   }
 
-  private async listSources(args: Record<string, unknown>): Promise<unknown> {
-    const countryCode = requireString(args, "country");
-    const adapter = this.registry.get(countryCode);
+  private async listSources(): Promise<unknown> {
+    const adapter = this.registry.get("de");
 
     return {
       country: adapter.country.code,
@@ -457,16 +434,6 @@ export class LawMcpShell {
     };
   }
 
-  private async runIngestion(args: Record<string, unknown>): Promise<unknown> {
-    const adapter = this.requireIngestionAdapter(args);
-    const sourceId = optionalString(args, "sourceId");
-    const dryRun = optionalBoolean(args, "dryRun") ?? false;
-    const request: IngestionRequest =
-      sourceId === undefined ? { dryRun } : { sourceId, dryRun };
-
-    return adapter.runIngestion!(request);
-  }
-
   // ---------------------------------------------------------------------------
   // Premium: version tracking handlers
   // ---------------------------------------------------------------------------
@@ -475,7 +442,7 @@ export class LawMcpShell {
     if (!process.env.PREMIUM_ENABLED) {
       return { premium: false, message: PREMIUM_UPGRADE_MESSAGE };
     }
-    const adapter = this.requireVersionTrackingAdapter(args);
+    const adapter = this.requireVersionTrackingAdapter();
     const lawIdentifier = requireString(args, "law_identifier");
     const article = requireString(args, "article");
     return adapter.getProvisionHistory!(lawIdentifier, article);
@@ -485,7 +452,7 @@ export class LawMcpShell {
     if (!process.env.PREMIUM_ENABLED) {
       return { premium: false, message: PREMIUM_UPGRADE_MESSAGE };
     }
-    const adapter = this.requireVersionTrackingAdapter(args);
+    const adapter = this.requireVersionTrackingAdapter();
     const lawIdentifier = requireString(args, "law_identifier");
     const article = requireString(args, "article");
     const fromDate = requireString(args, "from_date");
@@ -497,14 +464,14 @@ export class LawMcpShell {
     if (!process.env.PREMIUM_ENABLED) {
       return { premium: false, message: PREMIUM_UPGRADE_MESSAGE };
     }
-    const adapter = this.requireVersionTrackingAdapter(args);
+    const adapter = this.requireVersionTrackingAdapter();
     const since = requireString(args, "since");
     const limit = optionalNumber(args, "limit");
     return adapter.getRecentChanges!(since, limit);
   }
 
-  private requireVersionTrackingAdapter(args: Record<string, unknown>): CountryAdapter {
-    const adapter = this.requireCountry(args);
+  private requireVersionTrackingAdapter(): CountryAdapter {
+    const adapter = this.requireCountry();
 
     if (
       !adapter.capabilities.versionTracking ||
@@ -521,8 +488,8 @@ export class LawMcpShell {
     return adapter;
   }
 
-  private requireDocumentsAdapter(args: Record<string, unknown>): CountryAdapter {
-    const adapter = this.requireCountry(args);
+  private requireDocumentsAdapter(): CountryAdapter {
+    const adapter = this.requireCountry();
 
     if (!adapter.capabilities.documents || !adapter.searchDocuments || !adapter.getDocument) {
       throw new ShellError(
@@ -534,8 +501,8 @@ export class LawMcpShell {
     return adapter;
   }
 
-  private requireCaseLawAdapter(args: Record<string, unknown>): CountryAdapter {
-    const adapter = this.requireCountry(args);
+  private requireCaseLawAdapter(): CountryAdapter {
+    const adapter = this.requireCountry();
 
     if (!adapter.capabilities.caseLaw || !adapter.searchCaseLaw) {
       throw new ShellError(
@@ -547,10 +514,8 @@ export class LawMcpShell {
     return adapter;
   }
 
-  private requirePreparatoryWorksAdapter(
-    args: Record<string, unknown>,
-  ): CountryAdapter {
-    const adapter = this.requireCountry(args);
+  private requirePreparatoryWorksAdapter(): CountryAdapter {
+    const adapter = this.requireCountry();
 
     if (!adapter.capabilities.preparatoryWorks || !adapter.getPreparatoryWorks) {
       throw new ShellError(
@@ -562,8 +527,8 @@ export class LawMcpShell {
     return adapter;
   }
 
-  private requireCitationsAdapter(args: Record<string, unknown>): CountryAdapter {
-    const adapter = this.requireCountry(args);
+  private requireCitationsAdapter(): CountryAdapter {
+    const adapter = this.requireCountry();
 
     if (
       !adapter.capabilities.citations ||
@@ -579,8 +544,8 @@ export class LawMcpShell {
     return adapter;
   }
 
-  private requireFormattingAdapter(args: Record<string, unknown>): CountryAdapter {
-    const adapter = this.requireCountry(args);
+  private requireFormattingAdapter(): CountryAdapter {
+    const adapter = this.requireCountry();
 
     if (!adapter.capabilities.formatting || !adapter.formatCitation) {
       throw new ShellError(
@@ -592,8 +557,8 @@ export class LawMcpShell {
     return adapter;
   }
 
-  private requireCurrencyAdapter(args: Record<string, unknown>): CountryAdapter {
-    const adapter = this.requireCountry(args);
+  private requireCurrencyAdapter(): CountryAdapter {
+    const adapter = this.requireCountry();
 
     if (!adapter.capabilities.currency || !adapter.checkCurrency) {
       throw new ShellError(
@@ -605,8 +570,8 @@ export class LawMcpShell {
     return adapter;
   }
 
-  private requireLegalStanceAdapter(args: Record<string, unknown>): CountryAdapter {
-    const adapter = this.requireCountry(args);
+  private requireLegalStanceAdapter(): CountryAdapter {
+    const adapter = this.requireCountry();
 
     if (!adapter.capabilities.legalStance || !adapter.buildLegalStance) {
       throw new ShellError(
@@ -618,8 +583,8 @@ export class LawMcpShell {
     return adapter;
   }
 
-  private requireEuAdapter(args: Record<string, unknown>): CountryAdapter {
-    const adapter = this.requireCountry(args);
+  private requireEuAdapter(): CountryAdapter {
+    const adapter = this.requireCountry();
 
     if (
       !adapter.capabilities.eu ||
@@ -638,74 +603,8 @@ export class LawMcpShell {
     return adapter;
   }
 
-  private requireIngestionAdapter(args: Record<string, unknown>): CountryAdapter {
-    const adapter = this.requireCountry(args);
-
-    if (!adapter.capabilities.ingestion || !adapter.runIngestion) {
-      throw new ShellError(
-        "unsupported_capability",
-        `Country ${adapter.country.code} does not support ingestion`,
-      );
-    }
-
-    return adapter;
-  }
-
-  private requireCountry(args: Record<string, unknown>): CountryAdapter {
-    const countryCode = requireString(args, "country");
-    return this.registry.get(countryCode);
-  }
-
-  private countryToolSupport(adapter: CountryAdapter): Record<string, boolean> {
-    return {
-      "law_search_documents":
-        adapter.capabilities.documents &&
-        Boolean(adapter.searchDocuments) &&
-        Boolean(adapter.getDocument),
-      "law_search_case_law":
-        adapter.capabilities.caseLaw && Boolean(adapter.searchCaseLaw),
-      "law_get_preparatory_works":
-        adapter.capabilities.preparatoryWorks &&
-        Boolean(adapter.getPreparatoryWorks),
-      "law_format_citation":
-        adapter.capabilities.formatting && Boolean(adapter.formatCitation),
-      "law_check_currency":
-        adapter.capabilities.currency && Boolean(adapter.checkCurrency),
-      "law_build_legal_stance":
-        adapter.capabilities.legalStance && Boolean(adapter.buildLegalStance),
-      "law_get_eu_basis":
-        adapter.capabilities.eu && Boolean(adapter.getEuBasis),
-      "law_search_eu_implementations":
-        adapter.capabilities.eu &&
-        Boolean(adapter.searchEuImplementations),
-      "law_get_national_implementations":
-        adapter.capabilities.eu &&
-        Boolean(adapter.getNationalImplementations),
-      "law_get_provision_eu_basis":
-        adapter.capabilities.eu && Boolean(adapter.getProvisionEuBasis),
-      "law_validate_eu_compliance":
-        adapter.capabilities.eu && Boolean(adapter.validateEuCompliance),
-      "law_get_document":
-        adapter.capabilities.documents && Boolean(adapter.getDocument),
-      "law_parse_citation":
-        adapter.capabilities.citations &&
-        Boolean(adapter.parseCitation),
-      "law_validate_citation":
-        adapter.capabilities.citations && Boolean(adapter.validateCitation),
-      "law_list_sources": true,
-      "law_about": true,
-      "law_run_ingestion":
-        adapter.capabilities.ingestion && Boolean(adapter.runIngestion),
-      "law_get_provision_history":
-        adapter.capabilities.versionTracking &&
-        Boolean(adapter.getProvisionHistory),
-      "law_diff_provision":
-        adapter.capabilities.versionTracking &&
-        Boolean(adapter.diffProvision),
-      "law_get_recent_changes":
-        adapter.capabilities.versionTracking &&
-        Boolean(adapter.getRecentChanges),
-    };
+  private requireCountry(): CountryAdapter {
+    return this.registry.get("de");
   }
 }
 

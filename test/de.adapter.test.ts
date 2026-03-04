@@ -5,38 +5,30 @@ import { LawMcpShell } from "../src/shell/shell.js";
 
 const shell = LawMcpShell.fromAdapters(BUILTIN_ADAPTERS);
 
-test("de adapter is discoverable", async () => {
+test("de adapter serves about metadata", async () => {
   const result = await shell.handleToolCall({
-    name: "law_describe_country",
-    arguments: { country: "de" },
+    name: "about",
+    arguments: {},
   });
 
   assert.equal(result.ok, true);
   assert.equal(
-    (result.data as { country: { code: string } }).country.code,
-    "de",
-  );
-  assert.equal(
-    (result.data as { tools: Record<string, boolean> }).tools["law_search_case_law"],
-    true,
-  );
-  assert.equal(
-    (result.data as { tools: Record<string, boolean> }).tools["law_get_preparatory_works"],
-    true,
+    (result.data as { jurisdiction: string }).jurisdiction,
+    "DE",
   );
 });
 
 test("de citation validation supports paragraph and article formats", async () => {
   const paragraphResult = await shell.handleToolCall({
-    name: "law_validate_citation",
-    arguments: { country: "de", citation: "§ 242 Abs. 1 StGB" },
+    name: "validate_citation",
+    arguments: { citation: "§ 242 Abs. 1 StGB" },
   });
   assert.equal(paragraphResult.ok, true);
   assert.equal((paragraphResult.data as { valid: boolean }).valid, true);
 
   const articleResult = await shell.handleToolCall({
-    name: "law_validate_citation",
-    arguments: { country: "de", citation: "Art. 1 Abs. 1 GG" },
+    name: "validate_citation",
+    arguments: { citation: "Art. 1 Abs. 1 GG" },
   });
   assert.equal(articleResult.ok, true);
   assert.equal((articleResult.data as { valid: boolean }).valid, true);
@@ -44,8 +36,8 @@ test("de citation validation supports paragraph and article formats", async () =
 
 test("de citation parser normalizes common German variants", async () => {
   const articleKeywordResult = await shell.handleToolCall({
-    name: "law_parse_citation",
-    arguments: { country: "de", citation: "Artikel 1 Absatz 1 GG" },
+    name: "parse_citation",
+    arguments: { citation: "Artikel 1 Absatz 1 GG" },
   });
 
   assert.equal(articleKeywordResult.ok, true);
@@ -55,8 +47,8 @@ test("de citation parser normalizes common German variants", async () => {
   );
 
   const numberResult = await shell.handleToolCall({
-    name: "law_parse_citation",
-    arguments: { country: "de", citation: "§ 823 Abs 1 Nr 2 BGB" },
+    name: "parse_citation",
+    arguments: { citation: "§ 823 Abs 1 Nr 2 BGB" },
   });
 
   assert.equal(numberResult.ok, true);
@@ -68,8 +60,8 @@ test("de citation parser normalizes common German variants", async () => {
 
 test("de citation validation rejects unsupported formats", async () => {
   const result = await shell.handleToolCall({
-    name: "law_validate_citation",
-    arguments: { country: "de", citation: "BVerfG 1 BvR 123/45" },
+    name: "validate_citation",
+    arguments: { citation: "BVerfG 1 BvR 123/45" },
   });
 
   assert.equal(result.ok, true);

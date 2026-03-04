@@ -103,7 +103,7 @@ function printHelp(): void {
   const payload = {
     message:
       "Provide a JSON ToolCall on stdin. Example: " +
-      '{"name":"law_list_countries","arguments":{}}',
+      '{"name":"about","arguments":{}}',
     tools: shell.getToolDefinitions(),
   };
   process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
