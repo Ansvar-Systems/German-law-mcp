@@ -1,0 +1,17 @@
+{
+  "jurisdiction": "DE",
+  "mcp": "german-law-mcp",
+  "tier": "premium",
+  "build_date": "2026-03-01",
+  "tables": {
+    "statutes": 6870,
+    "law_documents": 91843,
+    "case_law_documents": 81645,
+    "preparatory_works": 37666,
+    "case_law_documents_fts": 81645,
+    "preparatory_works_fts": 37666,
+    "agency_guidance": 0
+  },
+  "db_size_bytes": 2254180352,
+  "db_size_mb": 2150
+}
