@@ -1,7 +1,10 @@
 const EXPLICIT_FTS_SYNTAX_PATTERN = /["*():^]|\bAND\b|\bOR\b|\bNOT\b/iu;
 
 function sanitizeToken(token: string): string {
-  return token.replace(/[^\p{L}\p{N}_]/gu, "");
+  // Preserve trailing * for FTS5 prefix search
+  const hasTrailingStar = token.endsWith("*");
+  const cleaned = token.replace(/[^\p{L}\p{N}_]/gu, "");
+  return hasTrailingStar && cleaned.length > 0 ? `${cleaned}*` : cleaned;
 }
 
 function extractTokens(query: string): string[] {

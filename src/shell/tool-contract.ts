@@ -22,6 +22,11 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
             "Search query: a German legal term, topic, or citation. " +
             "Examples: 'Datenschutz', '§ 433 BGB', 'Kündigungsschutz', 'Art. 14 GG'.",
         },
+        document_id: {
+          type: "string",
+          description:
+            "Filter results by statute. Accepts a statute ID (e.g. 'bgb', 'stgb') or a statute title (e.g. 'Grundgesetz', 'Bürgerliches Gesetzbuch').",
+        },
         limit: {
           type: "number",
           minimum: 1,
@@ -189,6 +194,11 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           type: "string",
           description:
             "Legal research topic or question. Examples: 'Mietrecht Kündigung', 'Datenschutz Arbeitnehmer', 'GmbH Haftung'.",
+        },
+        document_id: {
+          type: "string",
+          description:
+            "Filter statute results by statute ID or title. Examples: 'bgb', 'Grundgesetz'.",
         },
         limit: {
           type: "number",

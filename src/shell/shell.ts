@@ -111,8 +111,12 @@ export class LawMcpShell {
     const adapter = this.requireDocumentsAdapter();
     const query = requireString(args, "query");
     const limit = optionalNumber(args, "limit");
-    const request: SearchRequest =
-      limit === undefined ? { query } : { query, limit };
+    const documentId = optionalString(args, "document_id");
+    const request: SearchRequest = {
+      query,
+      ...(limit === undefined ? {} : { limit }),
+      ...(documentId === undefined ? {} : { document_id: documentId }),
+    };
 
     return adapter.searchDocuments!(request);
   }
@@ -227,6 +231,7 @@ export class LawMcpShell {
     const adapter = this.requireLegalStanceAdapter();
     const query = requireString(args, "query");
     const limit = optionalNumber(args, "limit");
+    const documentId = optionalString(args, "document_id");
     let includeCaseLaw = optionalBoolean(args, "includeCaseLaw");
     let includePreparatoryWorks = optionalBoolean(args, "includePreparatoryWorks");
 
@@ -248,6 +253,7 @@ export class LawMcpShell {
     const request: LegalStanceRequest = {
       query,
       ...(limit === undefined ? {} : { limit }),
+      ...(documentId === undefined ? {} : { document_id: documentId }),
       ...(includeCaseLaw === undefined ? {} : { includeCaseLaw }),
       ...(includePreparatoryWorks === undefined ? {} : { includePreparatoryWorks }),
     };
