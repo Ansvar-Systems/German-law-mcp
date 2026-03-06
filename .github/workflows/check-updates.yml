@@ -2,7 +2,7 @@ name: Daily Data Freshness Check
 
 on:
   schedule:
-    - cron: '0 5 * * *'
+    - cron: '0 5 * * 5'
   workflow_dispatch:
     inputs:
       auto_update:

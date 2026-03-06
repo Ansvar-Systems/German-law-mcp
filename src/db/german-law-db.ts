@@ -9,7 +9,7 @@ import type {
   ResponseMetadata,
   SearchResponse,
 } from "../shell/types.js";
-import { buildFtsQueryVariants } from "../utils/fts-query.js";
+import { buildFtsQueryVariantsLegacy as buildFtsQueryVariants } from "../utils/fts-query.js";
 import { detectCapabilities, readDbMetadata, type Capability, type DbMetadata } from '../capabilities.js';
 
 const DB_ENV_VAR = "GERMAN_LAW_DB_PATH";

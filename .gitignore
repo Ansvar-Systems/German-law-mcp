@@ -11,3 +11,5 @@ data/*.db.gz
 data/.auto_update.lock
 __pycache__/
 .vercel
+.claude/
+.serena/
