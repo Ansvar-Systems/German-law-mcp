@@ -79,7 +79,7 @@ export const germanyAdapter: CountryAdapter = {
     versionTracking: false,
   },
   async searchDocuments(request) {
-    const dbSearch = searchGermanLawDocuments(request.query, request.limit ?? 20);
+    const dbSearch = searchGermanLawDocuments(request.query, request.limit ?? 20, request.document_id);
     if (dbSearch) {
       return dbSearch;
     }
@@ -226,6 +226,7 @@ export const germanyAdapter: CountryAdapter = {
     const statutesResult = await this.searchDocuments?.({
       query: request.query,
       limit,
+      ...(request.document_id ? { document_id: request.document_id } : {}),
     });
     const includeCaseLaw = request.includeCaseLaw ?? true;
     const includePreparatoryWorks = request.includePreparatoryWorks ?? true;
