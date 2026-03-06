@@ -6,6 +6,7 @@ import type {
   CaseLawSearchRequest,
   LawDocument,
   PreparatoryWorksRequest,
+  ResponseMetadata,
   SearchResponse,
 } from "../shell/types.js";
 import { buildFtsQueryVariantsLegacy as buildFtsQueryVariants } from "../utils/fts-query.js";
@@ -68,66 +69,87 @@ let dbMetadata: DbMetadata | null = null;
 export function searchGermanLawDocuments(
   query: string,
   limit: number,
+  statuteId?: string,
 ): SearchResponse | null {
   const db = getDb();
   if (!db || !tableExists(db, "law_documents")) {
     return null;
   }
 
+  // Resolve statuteId from title if it does not match a known ID
+  const resolvedStatuteId = statuteId
+    ? resolveDocumentStatuteId(db, statuteId)
+    : undefined;
+  if (statuteId && resolvedStatuteId === null) {
+    return {
+      documents: [],
+      total: 0,
+      _metadata: { note: `No document found matching "${statuteId}"` },
+    };
+  }
+
+  // Fetch extra rows to account for deduplication
   const clampedLimit = clampLimit(limit);
-  const exactRows = findExactCitationRows(db, query, clampedLimit);
+  const fetchLimit = clampedLimit * 2;
+  let queryStrategy: string | undefined;
+
+  const exactRows = findExactCitationRows(db, query, fetchLimit);
   const mergedRows: StatuteRow[] = [];
   const seen = new Set<string>();
 
-  pushUniqueRows(mergedRows, seen, exactRows, clampedLimit);
-  if (mergedRows.length >= clampedLimit) {
-    return {
-      documents: mergedRows.map(mapStatuteRowToLawDocument),
-      total: mergedRows.length,
-    };
-  }
+  const filteredExact = resolvedStatuteId
+    ? exactRows.filter((r) => matchesStatuteId(r, resolvedStatuteId))
+    : exactRows;
+  pushUniqueRows(mergedRows, seen, filteredExact, fetchLimit);
 
-  const remaining = clampedLimit - mergedRows.length;
   const variants = buildFtsQueryVariants(query);
-  if (!variants.primary) {
-    return {
-      documents: mergedRows.map(mapStatuteRowToLawDocument),
-      total: mergedRows.length,
-    };
-  }
+  if (mergedRows.length < fetchLimit && variants.primary) {
+    if (tableExists(db, "law_documents_fts")) {
+      const primaryRows = runLawFtsQuery(db, variants.primary, fetchLimit * 3);
+      if (primaryRows) {
+        const filtered = resolvedStatuteId
+          ? primaryRows.filter((r) => matchesStatuteId(r, resolvedStatuteId))
+          : primaryRows;
+        pushUniqueRows(mergedRows, seen, filtered, fetchLimit);
+      }
 
-  if (tableExists(db, "law_documents_fts")) {
-    const primaryRows = runLawFtsQuery(db, variants.primary, remaining * 3);
-    if (primaryRows) {
-      pushUniqueRows(mergedRows, seen, primaryRows, clampedLimit);
-    }
-    if (mergedRows.length >= clampedLimit) {
-      return {
-        documents: mergedRows.map(mapStatuteRowToLawDocument),
-        total: mergedRows.length,
-      };
-    }
-
-    if (variants.fallback) {
-      const fallbackRows = runLawFtsQuery(db, variants.fallback, remaining * 3);
-      if (fallbackRows && fallbackRows.length > 0) {
-        pushUniqueRows(mergedRows, seen, fallbackRows, clampedLimit);
+      if (mergedRows.length < fetchLimit && variants.fallback) {
+        const fallbackRows = runLawFtsQuery(db, variants.fallback, fetchLimit * 3);
+        if (fallbackRows && fallbackRows.length > 0) {
+          if (!queryStrategy) queryStrategy = "broadened";
+          const filtered = resolvedStatuteId
+            ? fallbackRows.filter((r) => matchesStatuteId(r, resolvedStatuteId))
+            : fallbackRows;
+          pushUniqueRows(mergedRows, seen, filtered, fetchLimit);
+        }
       }
     }
-    if (mergedRows.length >= clampedLimit) {
-      return {
-        documents: mergedRows.map(mapStatuteRowToLawDocument),
-        total: mergedRows.length,
-      };
-    }
   }
 
-  const likeRows = runLawLikeQuery(db, query, remaining * 3);
-  pushUniqueRows(mergedRows, seen, likeRows, clampedLimit);
+  if (mergedRows.length < fetchLimit) {
+    const likeRows = runLawLikeQuery(db, query, fetchLimit * 3);
+    const filtered = resolvedStatuteId
+      ? likeRows.filter((r) => matchesStatuteId(r, resolvedStatuteId))
+      : likeRows;
+    if (filtered.length > 0 && mergedRows.length === 0) {
+      queryStrategy = "like_fallback";
+    }
+    pushUniqueRows(mergedRows, seen, filtered, fetchLimit);
+  }
+
+  const documents = deduplicateDocuments(
+    mergedRows.map(mapStatuteRowToLawDocument),
+    clampedLimit,
+  );
+
+  const metadata: ResponseMetadata | undefined = queryStrategy
+    ? { query_strategy: queryStrategy }
+    : undefined;
 
   return {
-    documents: mergedRows.map(mapStatuteRowToLawDocument),
-    total: mergedRows.length,
+    documents,
+    total: documents.length,
+    ...(metadata ? { _metadata: metadata } : {}),
   };
 }
 
@@ -1272,6 +1294,105 @@ function parseMetadata(
     console.error("[german-law-mcp] DB query error:", err instanceof Error ? err.message : err);
     return {};
   }
+}
+
+/**
+ * Deduplicate LawDocument results by title + citation.
+ * Same provision with different IDs (numeric vs slug) appears as duplicates;
+ * this keeps the first (highest-ranked) occurrence per unique title+citation.
+ */
+function deduplicateDocuments(
+  documents: LawDocument[],
+  limit: number,
+): LawDocument[] {
+  const seen = new Set<string>();
+  const deduped: LawDocument[] = [];
+  for (const doc of documents) {
+    const key = `${doc.title}::${doc.citation ?? ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(doc);
+    if (deduped.length >= limit) break;
+  }
+  return deduped;
+}
+
+/**
+ * Resolve a statute identifier from user input.
+ * Accepts a statute_id directly, or a title / abbreviation.
+ * Returns the statute_id string if found, or null if no match.
+ */
+function resolveDocumentStatuteId(
+  db: InstanceType<typeof Database>,
+  input: string,
+): string | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  // Step 1: Direct statute_id match
+  try {
+    const direct = db
+      .prepare(
+        "SELECT statute_id FROM law_documents WHERE lower(statute_id) = ? LIMIT 1",
+      )
+      .get(trimmed.toLowerCase()) as { statute_id: string } | undefined;
+    if (direct) return direct.statute_id;
+  } catch {
+    // table/column may not exist
+  }
+
+  // Step 2: Direct ID match
+  try {
+    const byId = db
+      .prepare(
+        "SELECT statute_id FROM law_documents WHERE lower(id) = ? AND statute_id IS NOT NULL LIMIT 1",
+      )
+      .get(trimmed.toLowerCase()) as { statute_id: string } | undefined;
+    if (byId) return byId.statute_id;
+  } catch {
+    // ignore
+  }
+
+  // Step 3: Title match (exact, case-insensitive)
+  try {
+    const byTitle = db
+      .prepare(
+        "SELECT statute_id FROM law_documents WHERE lower(title) = ? AND statute_id IS NOT NULL LIMIT 1",
+      )
+      .get(trimmed.toLowerCase()) as { statute_id: string } | undefined;
+    if (byTitle) return byTitle.statute_id;
+  } catch {
+    // ignore
+  }
+
+  // Step 4: Substring title match — shortest wins
+  try {
+    const likeRows = db
+      .prepare(
+        "SELECT statute_id, title FROM law_documents WHERE lower(title) LIKE ? AND statute_id IS NOT NULL",
+      )
+      .all(`%${trimmed.toLowerCase()}%`) as { statute_id: string; title: string }[];
+    if (likeRows.length > 0) {
+      likeRows.sort((a, b) => a.title.length - b.title.length);
+      return likeRows[0]?.statute_id ?? null;
+    }
+  } catch {
+    // ignore
+  }
+
+  return null;
+}
+
+/**
+ * Check whether a statute row matches the resolved statute_id.
+ */
+function matchesStatuteId(row: StatuteRow, statuteId: string): boolean {
+  if (!row.id) return false;
+  const colonIndex = row.id.indexOf(":");
+  if (colonIndex > 0) {
+    return row.id.slice(0, colonIndex).toLowerCase() === statuteId.toLowerCase();
+  }
+  return row.id.toLowerCase().startsWith(statuteId.toLowerCase());
 }
 
 function clampLimit(limit: number): number {

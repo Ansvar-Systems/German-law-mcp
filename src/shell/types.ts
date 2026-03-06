@@ -50,11 +50,18 @@ export interface LawDocument {
 export interface SearchRequest {
   query: string;
   limit?: number;
+  document_id?: string;
+}
+
+export interface ResponseMetadata {
+  note?: string;
+  query_strategy?: string;
 }
 
 export interface SearchResponse {
   documents: LawDocument[];
   total: number;
+  _metadata?: ResponseMetadata;
 }
 
 export interface CaseLawSearchRequest extends SearchRequest {
@@ -104,6 +111,7 @@ export interface CurrencyCheckResult {
 export interface LegalStanceRequest {
   query: string;
   limit?: number;
+  document_id?: string;
   includeCaseLaw?: boolean;
   includePreparatoryWorks?: boolean;
 }
@@ -114,6 +122,7 @@ export interface LegalStanceResult {
   caseLaw: LawDocument[];
   preparatoryWorks: LawDocument[];
   keyCitations: string[];
+  _metadata?: ResponseMetadata;
 }
 
 export interface EuBasisRequest {
