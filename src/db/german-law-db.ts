@@ -615,7 +615,7 @@ export function getMetadata(): DbMetadata {
   return dbMetadata ?? { tier: 'unknown', schema_version: '1', built_at: 'unknown', builder: 'unknown' };
 }
 
-function getDb(): InstanceType<typeof Database> | null {
+export function getDb(): InstanceType<typeof Database> | null {
   const resolvedPath = resolveGermanLawDatabasePath();
 
   if (dbAvailabilityChecked && resolvedPath === resolvedPathCache) {
