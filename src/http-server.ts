@@ -20,7 +20,8 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { LawMcpShell } from "./shell/shell.js";
 import { germanyAdapter } from "./adapters/de.js";
-import { getCapabilities } from "./db/german-law-db.js";
+import { getCapabilities, getDb } from "./db/german-law-db.js";
+import { getPremiumTools } from "./premium-tools.js";
 import type { ToolName } from "./shell/types.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -52,21 +53,64 @@ function createMcpServer(): { server: Server; shell: LawMcpShell } {
     { capabilities: { tools: {} } },
   );
 
+  // Detect premium tools using the SDK's public API instead of wrapping
+  // internal _requestHandlers (which broke in SDK v1.27.1).
+  let premium: ReturnType<typeof getPremiumTools> = null;
+  try {
+    const db = getDb();
+    if (db) {
+      premium = getPremiumTools(db);
+    }
+  } catch (err) {
+    console.warn(`[${SERVER_NAME}] Premium tools not available:`, err);
+  }
+
+  const premiumToolNames = new Set(premium?.handlers.keys() ?? []);
+
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     const definitions = shell.getToolDefinitions();
-    return {
-      tools: definitions.map((def) => ({
-        name: def.name,
-        description: def.description,
-        inputSchema: def.inputSchema,
-      })),
-    };
+    const baseTools = definitions.map((def) => ({
+      name: def.name,
+      description: def.description,
+      inputSchema: def.inputSchema,
+    }));
+
+    if (!premium) return { tools: baseTools };
+
+    // Deduplicate: premium tools override base tools with the same name
+    const filtered = baseTools.filter((t) => !premiumToolNames.has(t.name));
+    return { tools: [...filtered, ...premium.tools] };
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const toolName = request.params.name;
+    const args = (request.params.arguments ?? {}) as Record<string, unknown>;
+
+    // Premium tool — handle directly
+    const premiumHandler = premium?.handlers.get(toolName);
+    if (premiumHandler) {
+      try {
+        const data = premiumHandler(args);
+        return {
+          content: [
+            { type: "text" as const, text: JSON.stringify(data, null, 2) },
+          ],
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return {
+          content: [
+            { type: "text" as const, text: `Error executing ${toolName}: ${message}` },
+          ],
+          isError: true,
+        };
+      }
+    }
+
+    // Base tool — delegate to shell
     const result = await shell.handleToolCall({
-      name: request.params.name as ToolName,
-      arguments: request.params.arguments as Record<string, unknown>,
+      name: toolName as ToolName,
+      arguments: args,
     });
 
     if (result.ok) {
