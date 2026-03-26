@@ -37,12 +37,12 @@ This MCP server makes German law **searchable, cross-referenceable, and AI-reada
 
 > Connect directly to the hosted version -- zero dependencies, nothing to install.
 
-**Endpoint:** `https://mcp.ansvar.eu/law-german-law-mcp/mcp`
+**Endpoint:** `https://german-law-mcp.vercel.app/mcp`
 
 | Client | How to Connect |
 |--------|---------------|
 | **Claude.ai** | Settings > Connectors > Add Integration > paste URL |
-| **Claude Code** | `claude mcp add german-law --transport http https://mcp.ansvar.eu/law-german-law-mcp/mcp` |
+| **Claude Code** | `claude mcp add german-law --transport http https://german-law-mcp.vercel.app/mcp` |
 | **Claude Desktop** | Add to config (see below) |
 | **GitHub Copilot** | Add to VS Code settings (see below) |
 
@@ -53,7 +53,7 @@ This MCP server makes German law **searchable, cross-referenceable, and AI-reada
   "mcpServers": {
     "german-law": {
       "type": "url",
-      "url": "https://mcp.ansvar.eu/law-german-law-mcp/mcp"
+      "url": "https://german-law-mcp.vercel.app/mcp"
     }
   }
 }
@@ -66,7 +66,7 @@ This MCP server makes German law **searchable, cross-referenceable, and AI-reada
   "github.copilot.chat.mcp.servers": {
     "german-law": {
       "type": "http",
-      "url": "https://mcp.ansvar.eu/law-german-law-mcp/mcp"
+      "url": "https://german-law-mcp.vercel.app/mcp"
     }
   }
 }
