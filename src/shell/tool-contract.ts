@@ -118,7 +118,6 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           description: "Maximum number of results. Default: 20, max: 100.",
         },
       },
-      anyOf: [{ required: ["citation"] }, { required: ["statuteId"] }, { required: ["query"] }],
     },
   },
   {
@@ -155,6 +154,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       "Provide either a citation (e.g. '§ 1 BGB') or a statute ID. " +
       "Optionally specify an as-of date to check historical currency. " +
       "Note: This checks the ingested data, not a live government feed. " +
+      "Provide either citation or statuteId. " +
       "Data is updated regularly but may lag behind the official gazette by a few days.",
     inputSchema: {
       type: "object",
@@ -173,7 +173,6 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           description: "Check currency as of this date (YYYY-MM-DD). Default: today.",
         },
       },
-      anyOf: [{ required: ["citation"] }, { required: ["statuteId"] }],
     },
   },
   {
@@ -225,6 +224,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       "Looks up EU legal basis (CELEX numbers, directive/regulation references) linked to a German law. " +
       "Provide a citation, statute ID, or document ID. " +
       "Requires the eu_references table (professional tier). " +
+      "At least one of citation, statuteId, or documentId must be provided. " +
       "Use this to trace which EU law a German statute implements.",
     inputSchema: {
       type: "object",
@@ -250,11 +250,6 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           description: "Maximum EU references to return. Default: 20, max: 200.",
         },
       },
-      anyOf: [
-        { required: ["citation"] },
-        { required: ["statuteId"] },
-        { required: ["documentId"] },
-      ],
     },
   },
   {
