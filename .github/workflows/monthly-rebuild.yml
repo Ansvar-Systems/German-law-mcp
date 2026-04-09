@@ -1,0 +1,104 @@
+name: Monthly Full Database Rebuild
+
+on:
+  schedule:
+    # Run at 06:00 UTC on the 1st of every month
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry-run only — check what would be rebuilt without writing'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+permissions:
+  contents: read
+
+jobs:
+  rebuild:
+    name: Full rebuild from official sources
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install Node dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Install Python dependencies
+        run: pip install requests lxml
+
+      - name: Rebuild statutes (gesetze-im-internet.de)
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          echo "Rebuilding full statute database from gesetze-im-internet.de..."
+          python3 scripts/auto_update_german_law.py --quiet 2>&1 | tee rebuild_output.txt || true
+
+      - name: Dry-run check
+        if: github.event.inputs.dry_run == 'true'
+        run: |
+          echo "Dry-run: checking sources without writing..."
+          python3 scripts/auto_update_german_law.py --dry-run --quiet 2>&1 | tee rebuild_output.txt || true
+
+      - name: Upload rebuild log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monthly-rebuild-${{ github.run_id }}
+          path: rebuild_output.txt
+          retention-days: 30
+
+      - name: Bump patch version and tag
+        if: github.event.inputs.dry_run != 'true'
+        id: version
+        run: |
+          npm version patch --no-git-tag-version
+          NEW=$(node -p "require('./package.json').version")
+          echo "new_version=$NEW" >> $GITHUB_OUTPUT
+
+      - name: Commit and tag rebuilt database
+        if: github.event.inputs.dry_run != 'true'
+        env:
+          NEW_VERSION: ${{ steps.version.outputs.new_version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git add -A
+          git commit -m "chore: monthly full rebuild to v${NEW_VERSION}
+
+          Full database rebuild from official sources:
+          - gesetze-im-internet.de (federal statutes)
+          - rechtsprechung-im-internet.de (federal court decisions)
+          - dip.bundestag.de (preparatory works, Wahlperiode 19/20)
+
+          Triggered by monthly-rebuild workflow ($(date -u +%Y-%m-%d)).
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+          git tag "v${NEW_VERSION}"
+          git push origin main --tags

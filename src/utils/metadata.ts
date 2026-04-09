@@ -173,3 +173,43 @@ export interface ToolResponse<T> {
   /** Professional-use metadata and warnings */
   _metadata: ResponseMetadata;
 }
+
+// ---------------------------------------------------------------------------
+// Compliance _meta block (required on all tool responses)
+// ---------------------------------------------------------------------------
+
+/**
+ * Flat compliance metadata block required on every tool response.
+ * Contains disclaimer, data freshness date, copyright, and primary source URL.
+ */
+export interface ComplianceMeta {
+  /** Professional-use disclaimer */
+  disclaimer: string;
+  /** ISO date (YYYY-MM-DD) of the database build / last ingest */
+  data_age: string;
+  /** Copyright notice for the underlying data */
+  copyright: string;
+  /** Primary authoritative source URL */
+  source_url: string;
+}
+
+/**
+ * Build a compliance _meta block for a tool response.
+ *
+ * @param dataAge  - ISO date string (full timestamp or YYYY-MM-DD) of the DB build date
+ * @param sourceUrl - Primary source URL (defaults to gesetze-im-internet.de)
+ */
+export function responseMeta(dataAge: string, sourceUrl?: string): ComplianceMeta {
+  const age = dataAge ? dataAge.substring(0, 10) : new Date().toISOString().substring(0, 10);
+  return {
+    disclaimer:
+      'NOT LEGAL ADVICE. For research purposes only. Always verify with official sources ' +
+      'before relying on this data in legal or compliance matters. Users are solely responsible ' +
+      'for verifying accuracy and currency of all information.',
+    data_age: age,
+    copyright:
+      '© Bundesrepublik Deutschland. Data from Gesetze-im-Internet published under ' +
+      'dl-de/by-2-0 licence (Federal Ministry of Justice, BMJ).',
+    source_url: sourceUrl ?? 'https://www.gesetze-im-internet.de',
+  };
+}
