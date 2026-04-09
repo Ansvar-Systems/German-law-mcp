@@ -35,6 +35,22 @@ export type DocumentKind =
   | "preparatory_work"
   | "other";
 
+/**
+ * Per-document citation block added to every retrieval tool result.
+ * Enables clients to reconstruct a lookup call and display canonical references.
+ */
+export interface CitationBlock {
+  /** Canonical citation reference (e.g. "§ 242 BGB") */
+  canonical_ref: string;
+  /** Human-readable display text */
+  display_text: string;
+  /** MCP tool call that retrieves this specific document */
+  lookup: {
+    tool: string;
+    args: Record<string, unknown>;
+  };
+}
+
 export interface LawDocument {
   id: string;
   country: CountryCode;
@@ -45,6 +61,8 @@ export interface LawDocument {
   effectiveDate?: string;
   textSnippet?: string;
   metadata?: Record<string, string | number | boolean | null>;
+  /** Compliance citation block — present on all retrieval tool results */
+  _citation?: CitationBlock;
 }
 
 export interface SearchRequest {
@@ -312,6 +330,10 @@ export interface ToolResult {
     code: string;
     message: string;
     details?: unknown;
+    /** Normalised error type — mirrors code for machine-readable classification */
+    _error_type?: string;
+    /** Compliance meta block present on error responses */
+    _meta?: Record<string, unknown>;
   };
 }
 

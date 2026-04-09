@@ -20,8 +20,10 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { LawMcpShell } from "./shell/shell.js";
 import { germanyAdapter } from "./adapters/de.js";
-import { getCapabilities, getDb } from "./db/german-law-db.js";
+import { getCapabilities, getDb, getMetadata } from "./db/german-law-db.js";
 import { getPremiumTools } from "./premium-tools.js";
+import { responseMeta } from "./utils/metadata.js";
+import type { ComplianceMeta } from "./utils/metadata.js";
 import type { ToolName } from "./shell/types.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -41,7 +43,18 @@ try {
 
 const SERVER_NAME = "german-law-mcp";
 
+function buildComplianceMeta(): ComplianceMeta {
+  try {
+    const dbMeta = getMetadata();
+    return responseMeta(dbMeta.built_at ?? new Date().toISOString().substring(0, 10));
+  } catch {
+    return responseMeta(new Date().toISOString().substring(0, 10));
+  }
+}
+
 function createMcpServer(): { server: Server; shell: LawMcpShell } {
+  const meta = buildComplianceMeta();
+
   const enrichedAdapter = {
     ...germanyAdapter,
     getDbCapabilities: () => getCapabilities(),
@@ -90,7 +103,12 @@ function createMcpServer(): { server: Server; shell: LawMcpShell } {
     const premiumHandler = premium?.handlers.get(toolName);
     if (premiumHandler) {
       try {
-        const data = premiumHandler(args);
+        const rawData = premiumHandler(args);
+        // Attach _meta compliance block to premium tool responses
+        const data =
+          rawData !== null && rawData !== undefined && typeof rawData === "object"
+            ? { ...(rawData as Record<string, unknown>), _meta: meta }
+            : rawData;
         return {
           content: [
             { type: "text" as const, text: JSON.stringify(data, null, 2) },
@@ -100,7 +118,15 @@ function createMcpServer(): { server: Server; shell: LawMcpShell } {
         const message = err instanceof Error ? err.message : String(err);
         return {
           content: [
-            { type: "text" as const, text: `Error executing ${toolName}: ${message}` },
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                _error_type: "internal_error",
+                code: "internal_error",
+                message: `Error executing ${toolName}: ${message}`,
+                _meta: meta,
+              }),
+            },
           ],
           isError: true,
         };

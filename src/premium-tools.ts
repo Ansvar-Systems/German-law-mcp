@@ -710,7 +710,16 @@ export function wrapWithPremiumTools(server: Server, db: InstanceType<typeof Dat
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return {
-        content: [{ type: 'text', text: `Error executing ${toolName}: ${message}` }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              _error_type: 'internal_error',
+              code: 'internal_error',
+              message: `Error executing ${toolName}: ${message}`,
+            }),
+          },
+        ],
         isError: true,
       };
     }

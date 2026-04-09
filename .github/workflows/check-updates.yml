@@ -1,4 +1,4 @@
-name: Daily Data Freshness Check
+name: Weekly Data Freshness Check
 
 on:
   schedule:

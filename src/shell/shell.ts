@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { upgradeMessage } from "../capabilities.js";
+import { responseMeta } from "../utils/metadata.js";
+import type { ComplianceMeta } from "../utils/metadata.js";
 
 const PREMIUM_UPGRADE_MESSAGE =
   "Version tracking is available in the Ansvar Intelligence Portal. Contact hello@ansvar.ai for access.";
@@ -46,8 +48,16 @@ type ToolHandler = (args: Record<string, unknown>) => Promise<unknown>;
 
 export class LawMcpShell {
   private readonly handlers: Record<ToolName, ToolHandler>;
+  private readonly complianceMeta: ComplianceMeta;
 
   constructor(private readonly registry: AdapterRegistry) {
+    try {
+      const dbMeta = getMetadata();
+      this.complianceMeta = responseMeta(dbMeta.built_at ?? new Date().toISOString().substring(0, 10));
+    } catch {
+      this.complianceMeta = responseMeta(new Date().toISOString().substring(0, 10));
+    }
+
     this.handlers = {
       "search_legislation": this.searchDocuments.bind(this),
       "search_case_law": this.searchCaseLaw.bind(this),
@@ -86,7 +96,16 @@ export class LawMcpShell {
 
     try {
       const handler = this.handlers[call.name];
-      const data = await handler(args);
+      const rawData = await handler(args);
+
+      // Enrich retrieval tool results with per-document _citation blocks
+      const enriched = enrichWithCitations(call.name, rawData);
+
+      // Attach compliance _meta to every successful tool response
+      const data =
+        enriched !== null && enriched !== undefined && typeof enriched === "object"
+          ? { ...(enriched as Record<string, unknown>), _meta: this.complianceMeta }
+          : enriched;
 
       return {
         tool: call.name,
@@ -102,6 +121,8 @@ export class LawMcpShell {
           code: normalizedError.code,
           message: normalizedError.message,
           details: normalizedError.details,
+          _error_type: normalizedError.code,
+          _meta: this.complianceMeta as unknown as Record<string, unknown>,
         },
       };
     }
@@ -612,6 +633,84 @@ export class LawMcpShell {
   private requireCountry(): CountryAdapter {
     return this.registry.get("de");
   }
+}
+
+// ---------------------------------------------------------------------------
+// Citation enrichment helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a `_citation` block for a single document record.
+ * For statute/regulation kinds the lookup tool is always `get_provision`.
+ * For case law and preparatory works the search tool is used with the document id.
+ */
+function buildDocCitation(doc: Record<string, unknown>): Record<string, unknown> {
+  const id = String(doc.id ?? "");
+  const citationRef = typeof doc.citation === "string" && doc.citation ? doc.citation : id;
+  const title = String(doc.title ?? id);
+  const kind = doc.kind as string | undefined;
+  const isStatute = kind === "statute" || kind === "regulation";
+
+  return {
+    canonical_ref: citationRef,
+    display_text: title,
+    lookup: isStatute
+      ? { tool: "get_provision", args: { id } }
+      : {
+          tool: kind === "case" ? "search_case_law" : "get_preparatory_works",
+          args: { query: id },
+        },
+  };
+}
+
+/**
+ * Attach a `_citation` block to a document object if not already present.
+ */
+function enrichDocCitation(doc: unknown): unknown {
+  if (!doc || typeof doc !== "object") return doc;
+  const d = doc as Record<string, unknown>;
+  if (d._citation !== undefined) return doc;
+  return { ...d, _citation: buildDocCitation(d) };
+}
+
+/**
+ * Post-process a tool result to add per-document `_citation` blocks on
+ * retrieval tools that return document lists or single documents.
+ */
+function enrichWithCitations(toolName: ToolName, data: unknown): unknown {
+  if (!data || typeof data !== "object") return data;
+  const d = data as Record<string, unknown>;
+
+  // Tools returning SearchResponse with a `documents` array
+  if (
+    toolName === "search_legislation" ||
+    toolName === "search_case_law" ||
+    toolName === "get_preparatory_works"
+  ) {
+    if (Array.isArray(d.documents)) {
+      return { ...d, documents: d.documents.map(enrichDocCitation) };
+    }
+    return data;
+  }
+
+  // get_provision returns a single LawDocument (or null)
+  if (toolName === "get_provision") {
+    return enrichDocCitation(data);
+  }
+
+  // build_legal_stance has separate statutes / caseLaw / preparatoryWorks arrays
+  if (toolName === "build_legal_stance") {
+    return {
+      ...d,
+      statutes: Array.isArray(d.statutes) ? d.statutes.map(enrichDocCitation) : d.statutes,
+      caseLaw: Array.isArray(d.caseLaw) ? d.caseLaw.map(enrichDocCitation) : d.caseLaw,
+      preparatoryWorks: Array.isArray(d.preparatoryWorks)
+        ? d.preparatoryWorks.map(enrichDocCitation)
+        : d.preparatoryWorks,
+    };
+  }
+
+  return data;
 }
 
 function parseCitationStyle(
