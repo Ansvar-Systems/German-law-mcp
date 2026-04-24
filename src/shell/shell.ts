@@ -688,7 +688,8 @@ function enrichWithCitations(toolName: ToolName, data: unknown): unknown {
     toolName === "get_preparatory_works"
   ) {
     if (Array.isArray(d.documents)) {
-      return { ...d, documents: d.documents.map(enrichDocCitation) };
+      const { documents: docs, ...rest } = d;
+      return { ...rest, results: (docs as unknown[]).map(enrichDocCitation) };
     }
     return data;
   }
@@ -819,7 +820,7 @@ function requireDbCapability(
   }
 
   return {
-    documents: [],
+    results: [],
     total: 0,
     upgradeRequired: true,
     message: upgradeMessage(featureLabel),
