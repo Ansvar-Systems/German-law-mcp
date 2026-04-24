@@ -195,9 +195,9 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     });
 
     assert.equal(searchResult.ok, true);
-    const payload = searchResult.data as { total: number; documents: Array<{ id: string }> };
+    const payload = searchResult.data as { total: number; results: Array<{ id: string }> };
     assert.equal(payload.total >= 1, true);
-    assert.equal(payload.documents.some((doc) => doc.id === "bdsg:1"), true);
+    assert.equal(payload.results.some((doc) => doc.id === "bdsg:1"), true);
 
     const getResult = await shell.handleToolCall({
       name: "get_provision",
@@ -213,9 +213,9 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     });
     assert.equal(citationSearchResult.ok, true);
     const citationSearchPayload = citationSearchResult.data as {
-      documents: Array<{ id: string }>;
+      results: Array<{ id: string }>;
     };
-    assert.equal(citationSearchPayload.documents[0]?.id, "bdsg:1");
+    assert.equal(citationSearchPayload.results[0]?.id, "bdsg:1");
 
     const validCitationResult = await shell.handleToolCall({
       name: "validate_citation",
@@ -237,10 +237,10 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     });
     assert.equal(caseLawResult.ok, true);
     const caseLawPayload = caseLawResult.data as {
-      documents: Array<{ id: string; kind: string }>;
+      results: Array<{ id: string; kind: string }>;
     };
-    assert.equal(caseLawPayload.documents[0]?.id, "case:jure999999001");
-    assert.equal(caseLawPayload.documents[0]?.kind, "case");
+    assert.equal(caseLawPayload.results[0]?.id, "case:jure999999001");
+    assert.equal(caseLawPayload.results[0]?.kind, "case");
 
     const preparatoryWorksResult = await shell.handleToolCall({
       name: "get_preparatory_works",
@@ -248,10 +248,10 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     });
     assert.equal(preparatoryWorksResult.ok, true);
     const preparatoryPayload = preparatoryWorksResult.data as {
-      documents: Array<{ id: string; kind: string }>;
+      results: Array<{ id: string; kind: string }>;
     };
-    assert.equal(preparatoryPayload.documents[0]?.id, "prep:310586");
-    assert.equal(preparatoryPayload.documents[0]?.kind, "preparatory_work");
+    assert.equal(preparatoryPayload.results[0]?.id, "prep:310586");
+    assert.equal(preparatoryPayload.results[0]?.kind, "preparatory_work");
 
     const formattedCitationResult = await shell.handleToolCall({
       name: "format_citation",
