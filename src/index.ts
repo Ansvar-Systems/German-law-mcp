@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { BUILTIN_ADAPTERS } from "./adapters/index.js";
 import { getCapabilities } from "./db/german-law-db.js";
 import { ShellError } from "./shell/errors.js";
