@@ -683,7 +683,7 @@ function runLawFtsQuery(
         FROM law_documents_fts f
         JOIN law_documents d ON d.rowid = f.rowid
         WHERE law_documents_fts MATCH ?
-        ORDER BY bm25(law_documents_fts)
+        ORDER BY bm25(law_documents_fts, 10.0, 5.0, 1.0)
         LIMIT ?
         `,
       )
@@ -844,7 +844,7 @@ function runCaseLawFtsQuery(
         FROM case_law_documents_fts f
         JOIN case_law_documents c ON c.rowid = f.rowid
         WHERE case_law_documents_fts MATCH ? ${filters.clause}
-        ORDER BY bm25(case_law_documents_fts), c.decision_date DESC
+        ORDER BY bm25(case_law_documents_fts, 10.0, 5.0, 1.0), c.decision_date DESC
         LIMIT ?
         `,
       )
@@ -937,7 +937,7 @@ function runPreparatoryFtsQuery(
         FROM preparatory_works_fts f
         JOIN preparatory_works p ON p.rowid = f.rowid
         WHERE preparatory_works_fts MATCH ? ${filters.clause}
-        ORDER BY bm25(preparatory_works_fts), p.publication_date DESC
+        ORDER BY bm25(preparatory_works_fts, 10.0, 5.0, 1.0), p.publication_date DESC
         LIMIT ?
         `,
       )
