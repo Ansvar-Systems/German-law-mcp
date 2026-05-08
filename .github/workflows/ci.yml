@@ -100,6 +100,28 @@ jobs:
           cache: 'npm'
       - run: npm ci --ignore-scripts
       - run: npm run build
+      - name: Provision test database from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p data
+          TAG=$(gh release view --json tagName -q '.tagName' 2>/dev/null) || true
+          if [ -z "$TAG" ]; then
+            echo "::warning::No GitHub Release found — search contract tests will fail"
+            exit 0
+          fi
+          gh release download "$TAG" -p "database.db.gz" -D /tmp/ 2>/dev/null || \
+            gh release download "$TAG" -p "database-free.db.gz" -D /tmp/ 2>/dev/null || true
+          if [ -f /tmp/database.db.gz ]; then
+            gunzip -c /tmp/database.db.gz > data/database.db
+          elif [ -f /tmp/database-free.db.gz ]; then
+            gunzip -c /tmp/database-free.db.gz > data/database.db
+          fi
+          if [ -f data/database.db ] && [ "$(wc -c < data/database.db)" -gt 1024 ]; then
+            echo "Database provisioned from release $TAG ($(du -sh data/database.db | cut -f1))"
+          else
+            echo "::warning::No database available — search contract tests will fail"
+          fi
       - run: npm run test:contract
 
   contract-tests-nightly:
@@ -115,4 +137,26 @@ jobs:
           cache: 'npm'
       - run: npm ci --ignore-scripts
       - run: npm run build
+      - name: Provision test database from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p data
+          TAG=$(gh release view --json tagName -q '.tagName' 2>/dev/null) || true
+          if [ -z "$TAG" ]; then
+            echo "::warning::No GitHub Release found — search contract tests will fail"
+            exit 0
+          fi
+          gh release download "$TAG" -p "database.db.gz" -D /tmp/ 2>/dev/null || \
+            gh release download "$TAG" -p "database-free.db.gz" -D /tmp/ 2>/dev/null || true
+          if [ -f /tmp/database.db.gz ]; then
+            gunzip -c /tmp/database.db.gz > data/database.db
+          elif [ -f /tmp/database-free.db.gz ]; then
+            gunzip -c /tmp/database-free.db.gz > data/database.db
+          fi
+          if [ -f data/database.db ] && [ "$(wc -c < data/database.db)" -gt 1024 ]; then
+            echo "Database provisioned from release $TAG ($(du -sh data/database.db | cut -f1))"
+          else
+            echo "::warning::No database available — search contract tests will fail"
+          fi
       - run: CONTRACT_MODE=nightly npm run test:contract
