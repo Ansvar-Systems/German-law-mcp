@@ -1,9 +1,10 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve as pathResolve } from "node:path";
+import Database from "@ansvar/mcp-sqlite";
 import { LawMcpShell } from "../../src/shell/shell.js";
 import { BUILTIN_ADAPTERS } from "../../src/adapters/index.js";
 
@@ -104,10 +105,61 @@ const shell = LawMcpShell.fromAdapters(BUILTIN_ADAPTERS);
 const isNightly = process.env["CONTRACT_MODE"] === "nightly";
 
 // ---------------------------------------------------------------------------
+// CI-friendly skip: detect missing OR content-empty database.
+//
+// The CI `contract-tests` job runs `npm run build && npm run test:contract`
+// without provisioning data/database.db (the real DB is a 2 GB GitHub Release
+// asset that publish-ghcr.yml downloads at image-build time). Without this
+// guard, FTS5 search assertions like `min_results: 1` fail with "Expected at
+// least 1 results" even though the bug is "no DB to query," not a regression.
+//
+// Pattern ported from italian-law-mcp / dutch-law-mcp per the fleet-wide
+// memory `feedback_contract_test_skip_on_empty_db_2026_05_07`.
+// ---------------------------------------------------------------------------
+const dbPath =
+  process.env["GERMAN_LAW_DB_PATH"] ??
+  pathResolve(process.cwd(), "data", "database.db");
+const dbExists = existsSync(dbPath);
+
+let dbHasContent = false;
+if (dbExists) {
+  try {
+    const probe = new Database(dbPath, { readonly: true });
+    const row = probe
+      .prepare("SELECT COUNT(*) AS n FROM law_documents")
+      .get() as { n: number } | undefined;
+    dbHasContent = (row?.n ?? 0) > 0;
+    probe.close();
+  } catch {
+    dbHasContent = false;
+  }
+}
+const dbAvailable = dbExists && dbHasContent;
+
+if (!dbAvailable) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    `[contract] Skipping content-dependent contract tests: ` +
+      (!dbExists
+        ? `database not found at ${dbPath}.`
+        : `database at ${dbPath} is empty (no rows in law_documents).`) +
+      ` Run 'npm run ingest' to populate it, or download the release asset.`,
+  );
+}
+
+const suiteOpts: { skip?: string } = dbAvailable
+  ? {}
+  : {
+      skip: !dbExists
+        ? `database not found at ${dbPath}`
+        : `database at ${dbPath} is empty (no rows in law_documents)`,
+    };
+
+// ---------------------------------------------------------------------------
 // Contract test runner
 // ---------------------------------------------------------------------------
 
-describe(`Contract tests: ${fixture.mcp_name}`, () => {
+describe(`Contract tests: ${fixture.mcp_name}`, suiteOpts, () => {
   for (const test of fixture.tests) {
     describe(`[${test.id}] ${test.description}`, () => {
       let result: ToolResult;

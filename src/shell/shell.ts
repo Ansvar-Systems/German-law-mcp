@@ -640,20 +640,86 @@ export class LawMcpShell {
 // ---------------------------------------------------------------------------
 
 /**
+ * Source attribution for German legal corpora.
+ * License codes match `infrastructure/attribution-licenses.json` per the
+ * Source Attribution Standard (CLAUDE.md). Per-kind derivation is required
+ * because the upstream sources have different licenses:
+ *   - statutes/regulations: Bundesministerium der Justiz (Public-Domain)
+ *   - case law:             Bundesgerichte / Rechtsprechung (Public-Domain)
+ *   - preparatory works:    Bundestag DIP API (CC-BY-4.0)
+ */
+type DocAttribution = {
+  publisher: string;
+  license: string;
+  publisher_url: string;
+};
+
+const ATTRIBUTION_BY_KIND: Record<string, DocAttribution> = {
+  statute: {
+    publisher: "gesetze-im-internet.de",
+    license: "Public-Domain",
+    publisher_url: "https://www.gesetze-im-internet.de",
+  },
+  regulation: {
+    publisher: "gesetze-im-internet.de",
+    license: "Public-Domain",
+    publisher_url: "https://www.gesetze-im-internet.de",
+  },
+  case: {
+    publisher: "Rechtsprechung im Internet",
+    license: "Public-Domain",
+    publisher_url: "https://www.rechtsprechung-im-internet.de",
+  },
+  preparatory_work: {
+    publisher: "DIP Bundestag",
+    license: "CC-BY-4.0",
+    publisher_url: "https://search.dip.bundestag.de",
+  },
+};
+
+const FALLBACK_ATTRIBUTION: DocAttribution = {
+  publisher: "gesetze-im-internet.de",
+  license: "Public-Domain",
+  publisher_url: "https://www.gesetze-im-internet.de",
+};
+
+function attributionForKind(kind: string | undefined): DocAttribution {
+  if (kind && Object.prototype.hasOwnProperty.call(ATTRIBUTION_BY_KIND, kind)) {
+    return ATTRIBUTION_BY_KIND[kind] as DocAttribution;
+  }
+  return FALLBACK_ATTRIBUTION;
+}
+
+/**
  * Build a `_citation` block for a single document record.
  * For statute/regulation kinds the lookup tool is always `get_provision`.
  * For case law and preparatory works the search tool is used with the document id.
+ *
+ * Per the Source Attribution Standard, the block MUST carry per-item
+ * `source_url`, `publisher`, `license`. `source_url` is the upstream URL
+ * stored on the document row; publisher + license are derived from `kind`.
  */
-function buildDocCitation(doc: Record<string, unknown>): Record<string, unknown> {
+export function buildDocCitation(doc: Record<string, unknown>): Record<string, unknown> {
   const id = String(doc.id ?? "");
   const citationRef = typeof doc.citation === "string" && doc.citation ? doc.citation : id;
   const title = String(doc.title ?? id);
   const kind = doc.kind as string | undefined;
   const isStatute = kind === "statute" || kind === "regulation";
+  const attribution = attributionForKind(kind);
+  const sourceUrl =
+    typeof doc.source_url === "string" && doc.source_url
+      ? doc.source_url
+      : typeof doc.sourceUrl === "string" && doc.sourceUrl
+        ? doc.sourceUrl
+        : null;
 
   return {
     canonical_ref: citationRef,
     display_text: title,
+    source_url: sourceUrl,
+    publisher: attribution.publisher,
+    publisher_url: attribution.publisher_url,
+    license: attribution.license,
     lookup: isStatute
       ? { tool: "get_provision", args: { id } }
       : {
