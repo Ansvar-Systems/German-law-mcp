@@ -148,8 +148,14 @@ export class LawMcpShell {
     const article = optionalString(args, "article");
     const id = optionalString(args, "id");
 
-    if (law && article && adapter.getProvision) {
-      return adapter.getProvision(law, article);
+    // Gateway routing-table-prod.json:1811 maps `law` -> `id` via input_map,
+    // so the MCP receives `{id: <law>, article, country}` — no `law` key at
+    // all. Treat `id` as the statute identifier whenever `article` is also
+    // present. The bare `{id}` shape (legacy + the _citation.lookup hint)
+    // continues to resolve a row id directly.
+    const lawIdentifier = law ?? id;
+    if (lawIdentifier && article && adapter.getProvision) {
+      return adapter.getProvision(lawIdentifier, article);
     }
 
     if (!id) {

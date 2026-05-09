@@ -249,21 +249,35 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     assert.equal(getResult.ok, true);
     assert.equal((getResult.data as { id: string }).id, "bdsg:1");
 
-    // Gateway shape: {law, article, country}. input_map renames `law` to
-    // `id` upstream of the MCP, so the shell receives both `id` and
-    // `article` together — the new code path resolves via statute_id +
-    // section_ref. Without the fix this returns null (Bug 1).
+    // Real gateway shape from routing-table-prod.json:1806-1814 —
+    // input_map maps canonical `law` to MCP-side `id`, so the shell
+    // receives `{id: <law>, article, country}` with NO `law` key. The
+    // dispatch must treat `id` as the statute identifier when `article`
+    // is also present. Pre-fix this fell through to getDocument(id) and
+    // returned null in prod.
     const provisionResult = await shell.handleToolCall({
       name: "get_provision",
-      arguments: { id: "BGB", law: "BGB", article: "812", country: "DE" },
+      arguments: { id: "BGB", article: "812", country: "DE" },
     });
     assert.equal(provisionResult.ok, true);
     assert.equal((provisionResult.data as { id: string }).id, "bgb:812");
 
-    // "Art." statutes: section_ref="Art. 1", customer passes article="1".
+    // Hypothetical client passes the canonical `{law, article}` directly
+    // (no input_map). Same dispatch path; covers a future routing-table
+    // change that drops the law->id rename.
+    const lawProvisionResult = await shell.handleToolCall({
+      name: "get_provision",
+      arguments: { law: "BGB", article: "812", country: "DE" },
+    });
+    assert.equal(lawProvisionResult.ok, true);
+    assert.equal((lawProvisionResult.data as { id: string }).id, "bgb:812");
+
+    // "Art." statutes (Grundgesetz): section_ref is "Art. 1"; customer
+    // sends article="1"; the prefix candidates in getGermanLawProvision
+    // resolve it.
     const ggResult = await shell.handleToolCall({
       name: "get_provision",
-      arguments: { law: "GG", article: "1", country: "DE" },
+      arguments: { id: "GG", article: "1", country: "DE" },
     });
     assert.equal(ggResult.ok, true);
     assert.equal((ggResult.data as { id: string }).id, "gg:1");
@@ -271,7 +285,7 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     // Customer pre-prefixes the article ("§ 812"). Strip-and-retry path.
     const prefixedResult = await shell.handleToolCall({
       name: "get_provision",
-      arguments: { law: "BGB", article: "§ 812" },
+      arguments: { id: "BGB", article: "§ 812" },
     });
     assert.equal(prefixedResult.ok, true);
     assert.equal((prefixedResult.data as { id: string }).id, "bgb:812");
