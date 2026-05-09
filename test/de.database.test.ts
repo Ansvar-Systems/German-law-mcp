@@ -162,21 +162,24 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     JSON.stringify({ source: "fixture" }),
   );
 
-  // Fixture for an "Art." statute (Grundgesetz) so the prefix variants in
-  // getGermanLawProvision get exercised end-to-end.
+  // Fixture for a Grundgesetz article. Real prod stores GG section_refs
+  // as "Art 1" (no period) — verified against the 2,753 GG rows in the
+  // v0.4.0 release DB. Earlier the fixture used "Art. 1" which tested
+  // green but did not match the real corpus, masking a candidate-list
+  // gap that broke get_provision(GG, 1) in prod.
   db.prepare(`
     INSERT INTO law_documents (
       id, country, statute_id, section_ref, kind, title, citation, source_url, effective_date, text_snippet, metadata_json, updated_at
     )
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
   `).run(
-    "gg:1",
+    "gg:art-1",
     "de",
     "gg",
-    "Art. 1",
+    "Art 1",
     "statute",
     "Grundgesetz - Menschenwürde",
-    "Art. 1 GG",
+    "Art 1 GG",
     "https://www.gesetze-im-internet.de/gg/art_1.html",
     "1949-05-23",
     "Die Würde des Menschen ist unantastbar.",
@@ -272,15 +275,15 @@ test("de adapter uses sqlite-backed corpus when configured", async () => {
     assert.equal(lawProvisionResult.ok, true);
     assert.equal((lawProvisionResult.data as { id: string }).id, "bgb:812");
 
-    // "Art." statutes (Grundgesetz): section_ref is "Art. 1"; customer
-    // sends article="1"; the prefix candidates in getGermanLawProvision
-    // resolve it.
+    // Grundgesetz: real section_ref is "Art 1" (no period); customer
+    // sends article="1"; the candidate list now includes "Art N"
+    // alongside "Art. N" and "Artikel N".
     const ggResult = await shell.handleToolCall({
       name: "get_provision",
       arguments: { id: "GG", article: "1", country: "DE" },
     });
     assert.equal(ggResult.ok, true);
-    assert.equal((ggResult.data as { id: string }).id, "gg:1");
+    assert.equal((ggResult.data as { id: string }).id, "gg:art-1");
 
     // Customer pre-prefixes the article ("§ 812"). Strip-and-retry path.
     const prefixedResult = await shell.handleToolCall({

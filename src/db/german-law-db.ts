@@ -445,14 +445,17 @@ export function getGermanLawProvision(
 
   // Customers may submit the article as a bare number ("812"), with
   // German prefix ("§ 812", "Art. 1", "Artikel 1"), or already prefixed.
-  // The ingest stores section_ref with the prefix as it appears in the
-  // gesetze-im-internet XML (typically "§ N" for paragraph statutes,
-  // "Art. N" for constitutional articles). Try the bare/prefixed variants
-  // in order and return the first match.
+  // The ingest stores section_ref verbatim from the gesetze-im-internet
+  // <enbez> tag. Empirical shapes in the corpus (May 2026):
+  //   "§ N"      88,675 rows (paragraph statutes — BGB, StGB, …)
+  //   "Art N"     2,753 rows (Grundgesetz — *no period*)
+  //   "Artikel N"     6 rows (a handful of older statutes)
+  // Try every plausible prefix variant in order and return the first hit.
   const stripped = articleRaw.replace(/^(?:§{1,2}|Art\.?|Artikel)\s*/i, "").trim();
   const sectionRefCandidates = dedupeStrings([
     articleRaw,
     `§ ${stripped}`,
+    `Art ${stripped}`,
     `Art. ${stripped}`,
     `Artikel ${stripped}`,
     stripped,
